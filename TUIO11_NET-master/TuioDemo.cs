@@ -10,6 +10,10 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.ToolTip;
 using System.Reflection;
 using System.Net.Sockets;
 using System.Text;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using System.Threading;
+
 
 public class TuioDemo : Form, TuioListener
 {
@@ -32,8 +36,8 @@ public class TuioDemo : Form, TuioListener
 	private int window_top = 0;
 	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
 	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
-
-	public string serverIP = "DESKTOP-1RLK4BP"; 
+    private Thread listenerThread;
+    public string serverIP = "MohammedAdnan"; 
 	public int port = 8000;
 
 	private bool fullscreen;
@@ -55,8 +59,6 @@ public class TuioDemo : Form, TuioListener
 
 	public TuioDemo(int port)
 	{
-
-
 		verbose = false;
 		fullscreen = false;
 		width = window_width;
@@ -80,17 +82,11 @@ public class TuioDemo : Form, TuioListener
 		cursorList = new Dictionary<long, TuioCursor>(128);
 		blobList = new Dictionary<long, TuioBlob>(128);
 
-		client = new TuioClient(port);
-		client.addTuioListener(this);
+        StartConnection();
 
-		client.connect();
-		// Create a TCP/IP socket
-		client1 = new TcpClient("DESKTOP-1RLK4BP", 8000);
-		// Get the stream to send data
-		stream = client1.GetStream();
-	}
+    }
 
-	private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
+    private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
 	{
 
 		if (e.KeyData == Keys.F1)
@@ -146,7 +142,15 @@ public class TuioDemo : Form, TuioListener
 		client.removeTuioListener(this);
 
 		client.disconnect();
-		System.Environment.Exit(0);
+
+        if (listenerThread != null && listenerThread.IsAlive)
+        {
+            listenerThread.Abort(); // Stop the listening thread
+        }
+
+        stream?.Close();
+
+        System.Environment.Exit(0);
 	}
 
 	public void addTuioObject(TuioObject o)
@@ -485,7 +489,6 @@ public class TuioDemo : Form, TuioListener
 		}
 	}
 
-
 	public static void Main(String[] argv)
 	{
 		int port = 0;
@@ -504,8 +507,8 @@ public class TuioDemo : Form, TuioListener
 				break;
 		}
 
-		TuioDemo app = new TuioDemo(port);
-		Application.Run(app);
+        TuioDemo app = new TuioDemo(port);
+        Application.Run(app);
 	}
 
     public void SendCountryName(TuioObject markerData)
@@ -544,6 +547,57 @@ public class TuioDemo : Form, TuioListener
         catch (Exception e)
         {
             Console.WriteLine("Exception: {0}", e);
+        }
+    }
+
+    private void StartConnection()
+    {
+        string server = "MohammedAdnan"; // Server address
+        int port = 8000; // Server port
+
+        try
+        {
+            client1 = new TcpClient(server, port);
+
+            string message = "Hello, Server!";
+            byte[] data = Encoding.UTF8.GetBytes(message);
+
+            // Get the network stream
+            stream = client1.GetStream();
+
+            // Send the message to the server
+            stream.Write(data, 0, data.Length);
+            Debug.WriteLine($"Sent: {message}");
+
+            listenerThread = new Thread(ListenForMessages);
+            listenerThread.IsBackground = true;
+            listenerThread.Start();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to connect: {ex.Message}");
+        }
+    }
+
+    private void ListenForMessages()
+    {
+        byte[] buffer = new byte[1024];
+
+        try
+        {
+            while (true)
+            {
+                int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                if (bytesRead > 0)
+                {
+                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+					Debug.WriteLine($"Received from server: {message}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Connection lost: {ex.Message}");
         }
     }
 
