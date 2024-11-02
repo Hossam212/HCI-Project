@@ -37,8 +37,8 @@ public class TuioDemo : Form, TuioListener
 	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
 	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "MohammedAdnan"; 
-	public int port = 8000;
+    public string serverIP = "LAPTOP-E2THQTEG"; 
+
 
 	private bool fullscreen;
 	private bool verbose;
@@ -81,6 +81,10 @@ public class TuioDemo : Form, TuioListener
 		objectList = new Dictionary<long, TuioObject>(128);
 		cursorList = new Dictionary<long, TuioCursor>(128);
 		blobList = new Dictionary<long, TuioBlob>(128);
+
+        client = new TuioClient(port);
+        client.addTuioListener(this);
+        client.connect();
 
         StartConnection();
 
@@ -516,6 +520,7 @@ public class TuioDemo : Form, TuioListener
 		
         try
         {
+            
             string countryName = "keep trying";
             // Replace with your TUIO marker data
             switch (markerData.SymbolID)
@@ -552,7 +557,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "MohammedAdnan"; // Server address
+        string server = "LAPTOP-E2THQTEG"; // Server address
         int port = 8000; // Server port
 
         try
