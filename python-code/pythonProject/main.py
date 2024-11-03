@@ -10,9 +10,9 @@ current_client_socket = None
 async def start_server():
     global current_client_socket
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.bind(('LAPTOP-E2THQTEG', 8000))
+    server_socket.bind(('DESKTOP-HOHKG61', 8000))
     server_socket.listen(5)
-    print(f'Server is listening on LAPTOP-E2THQTEG:8000')
+    print(f'Server is listening on DESKTOP-HOHKG61:8000')
 
     while True:
         client_socket, address = await asyncio.get_event_loop().run_in_executor(None, server_socket.accept)
@@ -52,13 +52,13 @@ async def scan_bluetooth_devices():
             print(f"\nScan completed at {scan_time}")
             print(f"Found {len(devices)} devices:\n")
 
-            specific_mac = "A4:C6:9A:A3:EA:F2"
+            specific_mac = "9C:56:36:B0:51:8A","47:72:6A:62:DB:71"
             for device in devices:
                 print(f"Device Name: {device.name or 'Unknown'}")
                 print(f"MAC Address: {device.address}")
 
-                if device.address == specific_mac:
-                    message = f"Found device: {device.name} with MAC: {device.address}"
+                if device.address in specific_mac:
+                    message = f"{device.address}"
                     print(f"Sending message to client: {message}")
 
                     if current_client_socket:  # Ensure there's an active client connection
