@@ -18,12 +18,11 @@ using System.Timers;
 
 public class TuioDemo : Form, TuioListener
 {
-	private TuioClient client;
+    string macmessage;
+    private TuioClient client;
 	private Dictionary<long, TuioObject> objectList;
 	private Dictionary<long, TuioCursor> cursorList;
 	private Dictionary<long, TuioBlob> blobList;
-
-
     Brush startBrush = Brushes.Green;
     Brush endBrush = Brushes.Red;
     private int cgermany = 0;
@@ -40,17 +39,14 @@ public class TuioDemo : Form, TuioListener
 	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
 	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "DESKTOP-1RLK4BP";
-
+    public string serverIP = "MohammedAdnan";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
     private int menuSize3 = 400;
     private int menuSize4 = 400;
-
     private bool fullscreen;
 	private bool verbose;
-
 	Font font = new Font("Arial", 10.0f);
 	SolidBrush fntBrush = new SolidBrush(Color.White);
 	SolidBrush bgrBrush = new SolidBrush(Color.FromArgb(0, 0, 64));
@@ -64,6 +60,7 @@ public class TuioDemo : Form, TuioListener
 	private string crossimagepath;
 	TcpClient client1;
 	NetworkStream stream;
+    bool isLogin = false;
 
 	public TuioDemo(int port)
 	{
@@ -273,25 +270,28 @@ public class TuioDemo : Form, TuioListener
     private async Task ActivateStartMenuOption( int flag)
     {
         await Task.Delay(2000);
-        if(flag==1)
+        if(flag == 1)
         {
             isRunning = true;
         }
-        else
+        else if (flag == 2)
         {
             stream.Close();
             client1.Close();
             this.Close();
         }
+        else if (flag == 3)
+        {
+            isRunning = false;
+        }
     }
     protected override void OnPaintBackground(PaintEventArgs pevent)
-
 	{
 		// Getting the graphics object
 		Graphics g = pevent.Graphics;
 		g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
 
-        if (isRunning)
+        if (isRunning && isLogin)
         {
             backgroundImagePath = Path.Combine(Environment.CurrentDirectory, "background.jpg");
             markimagepath = Path.Combine(Environment.CurrentDirectory, "right.png");
@@ -411,8 +411,10 @@ public class TuioDemo : Form, TuioListener
                                     }
                                 }
                                 break;
-                            case 2:
-                                isRunning = false;
+                            case 1:
+
+                                _= ActivateStartMenuOption(3);
+
                                 break;
                             default:
                                 // Use default rectangle for other 
@@ -519,10 +521,9 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
-        else
+
+        else if (isLogin == true && isRunning == false)
         {
-
-
             // Draw circle background
             g.FillEllipse(bgrBrush, 400, 100, 400, 400);
 
@@ -569,12 +570,12 @@ public class TuioDemo : Form, TuioListener
                                 {
                                     startBrush = Brushes.DarkGreen;
 
-                                    //_ = ActivateStartMenuOption(1);
+                                    _ = ActivateStartMenuOption(1);
                                 }
                                 else if (tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
                                 {
                                     endBrush =  Brushes.DarkRed;
-                                    //_ = ActivateStartMenuOption(2);
+                                    _ = ActivateStartMenuOption(2);
                                 }
                                 else
                                 {
@@ -588,6 +589,55 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
+
+        if(isLogin == false)
+        {
+            string text = "Login";
+            Font font = new Font("Arial", 24, FontStyle.Bold);
+            SizeF textSize = g.MeasureString(text, font);
+            float x = (this.ClientSize.Width - textSize.Width) / 2; // Center the text horizontally
+            float y = (this.ClientSize.Height - textSize.Height) / 2; // Center the text vertically
+            g.FillRectangle(Brushes.Black, new Rectangle(0, 0, width, height));
+            g.DrawString(text, font, Brushes.White, x, y); // Draw the text in white
+
+        }
+    }
+
+    public void Login(String MacAdress)
+    {
+        if (isLogin == false)
+        {
+            try
+            {
+                // Open the loginstudent.txt file and read each line
+                using (StreamReader reader = new StreamReader("loginstudent.txt"))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        // Trim the line to remove any whitespace
+                        string studentName = line.Trim();
+                        // Compare the student name with the target name
+                        if (studentName.Equals(macmessage, StringComparison.OrdinalIgnoreCase))
+                        {
+                            isLogin = true;
+                            Invalidate();
+                            Console.WriteLine($"{studentName} has successfully logged in.");
+                            break; // Exit the loop once the student is found
+                        }
+                    }
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("The file loginstudent.txt was not found.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+
     }
 
     public static void Main(String[] argv)
@@ -654,7 +704,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "DESKTOP-1RLK4BP"; // Server address
+        string server = "MohammedAdnan"; // Server address
         int port = 8000; // Server port
 
         try
@@ -692,8 +742,14 @@ public class TuioDemo : Form, TuioListener
                 int bytesRead = stream.Read(buffer, 0, buffer.Length);
                 if (bytesRead > 0)
                 {
-                    string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-					Debug.WriteLine($"Received from server: {message}");
+                    macmessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+
+                    if (isLogin == false)
+                    {
+                        Login(macmessage);
+                    }
+
+                    Debug.WriteLine($"Received from server: {macmessage}");
                 }
             }
         }
