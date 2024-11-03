@@ -24,7 +24,9 @@ public class TuioDemo : Form, TuioListener
 	private Dictionary<long, TuioBlob> blobList;
 
 
-	private int cgermany = 0;
+    Brush startBrush = Brushes.Green;
+    Brush endBrush = Brushes.Red;
+    private int cgermany = 0;
 	private int cspain = 0;
 	private int cegypt = 0;
 	private int correctct = 0;
@@ -43,6 +45,8 @@ public class TuioDemo : Form, TuioListener
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
+    private int menuSize3 = 400;
+    private int menuSize4 = 400;
 
     private bool fullscreen;
 	private bool verbose;
@@ -517,16 +521,33 @@ public class TuioDemo : Form, TuioListener
         }
         else
         {
+
+
             // Draw circle background
             g.FillEllipse(bgrBrush, 400, 100, 400, 400);
 
-            // Draw Start and End sectors
-            g.FillPie(Brushes.Green, 400, 100, menuSize1, menuSize1, 270, 180); // "Start" half
-            g.FillPie(Brushes.Red, 400, 100, menuSize2, menuSize2, 270, -180); // "End" half
+            // Define angles for each section
+            float startAngle = 270; // Starting angle for the first section
+            float sweepAngle = 90;  // Angle for each section
 
-            // Draw labels for Start and End options
-            g.DrawString("Start", new Font("Arial", 18), Brushes.White, new PointF(650, 300));
-            g.DrawString("End", new Font("Arial", 18), Brushes.White, new PointF(450, 300));
+            // Draw sections
+            g.FillPie(startBrush, 400, 100, menuSize1, menuSize1, startAngle, sweepAngle); // "Start" section
+            startAngle += sweepAngle; // Move to next section
+
+            g.FillPie(startBrush, 400, 100, menuSize2, menuSize2, startAngle, sweepAngle); // "Middle" section
+            startAngle += sweepAngle; // Move to next section
+
+            g.FillPie(endBrush, 400, 100, menuSize3, menuSize3, startAngle, sweepAngle); // "End" section
+            startAngle += sweepAngle; // Move to next section
+
+            g.FillPie(endBrush, 400, 100, menuSize4, menuSize4, startAngle, sweepAngle); // "Another" section
+
+            // Draw labels for each section
+            g.DrawString("Start", new Font("Arial", 18), Brushes.White, new PointF(720, 280));
+            g.DrawString("Exit", new Font("Arial", 18), Brushes.White, new PointF(420, 280));
+
+            // Draw inner circle to create an empty effect
+            g.FillEllipse(bgrBrush, 500, 200, 200, 200); // Adjust size and position as needed
 
             if (objectList.Count > 0)
             {
@@ -546,21 +567,20 @@ public class TuioDemo : Form, TuioListener
                             case 1:
                                 if (tobj.AngleDegrees >= 20 && tobj.AngleDegrees <= 80)
                                 {
-                                    menuSize1 = 430;
-                                    menuSize2 = 400;
-                                    _ = ActivateStartMenuOption(1);
-                                }
-                                else if(tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
-                                {
-                                    menuSize2 = 430;
-                                    menuSize1 = 400;
-                                    _ = ActivateStartMenuOption(2);
+                                    startBrush = Brushes.DarkGreen;
 
+                                    //_ = ActivateStartMenuOption(1);
+                                }
+                                else if (tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
+                                {
+                                    endBrush =  Brushes.DarkRed;
+                                    //_ = ActivateStartMenuOption(2);
                                 }
                                 else
                                 {
-                                    menuSize1 = 400;
-                                    menuSize2 = 400;
+                                    startBrush = Brushes.Green;
+                                    endBrush = Brushes.Red;
+
                                 }
                                 break;
                         }
