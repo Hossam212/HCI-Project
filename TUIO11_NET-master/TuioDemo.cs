@@ -14,6 +14,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Timers;
+using System.Net.Mail;
 
 
 public class TuioDemo : Form, TuioListener
@@ -39,7 +40,7 @@ public class TuioDemo : Form, TuioListener
 	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
 	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "MohammedAdnan";
+    public string serverIP = "DESKTOP-HOHKG61";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
@@ -61,8 +62,20 @@ public class TuioDemo : Form, TuioListener
 	TcpClient client1;
 	NetworkStream stream;
     bool isLogin = false;
+    string[] parts;
+    private bool isTeacherLogin = false;
+    private List<string> studentRecords = new List<string>();
+    private bool isShow = false;
 
-	public TuioDemo(int port)
+    private class StudentRecord
+    {
+        public string MacAddress { get; set; }
+        public int Score { get; set; }
+        public int Mistakes { get; set; }
+    }
+
+
+    public TuioDemo(int port)
 	{
 		verbose = false;
 		fullscreen = false;
@@ -156,7 +169,13 @@ public class TuioDemo : Form, TuioListener
         {
             listenerThread.Abort(); // Stop the listening thread
         }
-
+        if (isRunning == true)
+        {
+            WriteScoreToFile(macmessage, score, mistakes);
+            // Optionally, you can display a message confirming the save
+            MessageBox.Show("Game data saved successfully!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        
         stream?.Close();
 
         System.Environment.Exit(0);
@@ -283,6 +302,25 @@ public class TuioDemo : Form, TuioListener
         else if (flag == 3)
         {
             isRunning = false;
+        }
+    }
+    private async Task ActivateViewStudentRecords(int flag)
+    {
+        await Task.Delay(2000);
+        if (flag == 1)
+        {
+            isShow=true;
+            
+        }
+        else if (flag == 2)
+        {
+            stream.Close();
+            client1.Close();
+            this.Close();
+        }
+        else if (flag == 3)
+        {
+            isShow = false;
         }
     }
     protected override void OnPaintBackground(PaintEventArgs pevent)
@@ -521,9 +559,38 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
+        else if(isTeacherLogin==true&&isShow==true)
+        {
+            LoadStudentRecords();
+            // Draw the records if they exist
+            if (studentRecords.Count > 0)
+            {
+                g.DrawString("Name", new Font("Arial", 20, FontStyle.Bold), Brushes.Green, new PointF(200, 60));
+                g.DrawString("Score", new Font("Arial", 20, FontStyle.Bold), Brushes.Red, new PointF(600, 60));
+                g.DrawString("Mistake", new Font("Arial", 20, FontStyle.Bold), Brushes.White, new PointF(900, 60));
+
+                float yOffset = 100; // Starting Y position for records
+                foreach (var record in studentRecords)
+                {
+                    var p=record.Split(',');
+                    string names = p[0].Trim();
+                    string points = p[1].Trim();
+                    string error = p[2].Trim();
+                    g.DrawString(names, new Font("Arial", 14), Brushes.White, new PointF(200, yOffset));
+                    g.DrawString(points, new Font("Arial", 14), Brushes.White, new PointF(600, yOffset));
+                    g.DrawString(error, new Font("Arial", 14), Brushes.White, new PointF(900, yOffset));
+                    yOffset += 25; // Increase Y position for the next record
+                }
+            }
+            else
+            {
+                g.DrawString("No records found.", new Font("Arial", 14), Brushes.White, new PointF(450, 320));
+            }
+        }    
 
         else if (isLogin == true && isRunning == false)
         {
+            g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
             // Draw circle background
             g.FillEllipse(bgrBrush, 400, 100, 400, 400);
 
@@ -589,8 +656,78 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
+        else if (isTeacherLogin == true && isShow == false)
+        {
+            g.DrawString("Teacher Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 30));
+            // Draw circle background
+            g.FillEllipse(bgrBrush, 400, 100, 400, 400);
 
-        if(isLogin == false)
+            // Define angles for each section
+            float startAngle = 270; // Starting angle for the first section
+            float sweepAngle = 90;  // Angle for each section
+
+            // Draw sections
+            g.FillPie(startBrush, 400, 100, menuSize1, menuSize1, startAngle, sweepAngle); // "Start" section
+            startAngle += sweepAngle; // Move to next section
+
+            g.FillPie(startBrush, 400, 100, menuSize2, menuSize2, startAngle, sweepAngle); // "Middle" section
+            startAngle += sweepAngle; // Move to next section
+
+            g.FillPie(endBrush, 400, 100, menuSize3, menuSize3, startAngle, sweepAngle); // "End" section
+            startAngle += sweepAngle; // Move to next section
+
+            g.FillPie(endBrush, 400, 100, menuSize4, menuSize4, startAngle, sweepAngle); // "Another" section
+
+            // Draw labels for each section
+            g.DrawString("viewStudentRecords", new Font("Arial", 18), Brushes.White, new PointF(720, 280));
+            g.DrawString("Exit", new Font("Arial", 18), Brushes.White, new PointF(420, 280));
+
+            // Draw inner circle to create an empty effect
+            g.FillEllipse(bgrBrush, 500, 200, 200, 200); // Adjust size and position as needed
+
+            if (objectList.Count > 0)
+            {
+                lock (objectList)
+                {
+                    foreach (TuioObject tobj in objectList.Values)
+                    {
+                        int ox = tobj.getScreenX(width);
+                        int oy = tobj.getScreenY(height);
+                        int size = height / 4;
+                        g.TranslateTransform(ox, oy);
+                        g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
+                        g.TranslateTransform(-ox, -oy);
+
+                        switch (tobj.SymbolID)
+                        {
+                            case 1:
+                                if (tobj.AngleDegrees >= 20 && tobj.AngleDegrees <= 80)
+                                {
+                                    startBrush = Brushes.DarkGreen;
+
+                                    _ = ActivateViewStudentRecords(1);
+
+                                    // Load records from the text file
+                                    Invalidate(); // Trigger a repaint to show the record
+                                }
+                                else if (tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
+                                {
+                                    endBrush = Brushes.DarkRed;
+                                    _ = ActivateStartMenuOption(2);
+                                }
+                                else
+                                {
+                                    startBrush = Brushes.Green;
+                                    endBrush = Brushes.Red;
+
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+        if (isLogin == false&& isTeacherLogin==false)
         {
             string text = "Login";
             Font font = new Font("Arial", 24, FontStyle.Bold);
@@ -617,6 +754,8 @@ public class TuioDemo : Form, TuioListener
                     {
                         // Trim the line to remove any whitespace
                         string studentName = line.Trim();
+                        parts= studentName.Split(',');
+                        studentName = parts[0].Trim();
                         // Compare the student name with the target name
                         if (studentName.Equals(macmessage, StringComparison.OrdinalIgnoreCase))
                         {
@@ -637,6 +776,8 @@ public class TuioDemo : Form, TuioListener
                 Console.WriteLine($"An error occurred: {ex.Message}");
             }
         }
+
+
 
     }
 
@@ -704,7 +845,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "MohammedAdnan"; // Server address
+        string server = "DESKTOP-HOHKG61"; // Server address
         int port = 8000; // Server port
 
         try
@@ -731,6 +872,43 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
+    public void LoginForTeacher(String MacAdress)
+    {
+        if (isTeacherLogin == false)
+        {
+            try
+            {
+                // Open the loginteacher.txt file and read each line
+                using (StreamReader reader = new StreamReader("loginteacher.txt"))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        // Trim the line to remove any whitespace
+                        string teacherName = line.Trim();
+                        // Compare the teacher name with the target name
+                        if (teacherName.Equals(macmessage, StringComparison.OrdinalIgnoreCase))
+                        {
+                            isTeacherLogin = true;
+                            Invalidate(); // Refresh the UI
+                            Console.WriteLine($"{teacherName} has successfully logged in as a teacher.");
+                            break; // Exit the loop once the teacher is found
+                        }
+                    }
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                Console.WriteLine("The file loginteacher.txt was not found.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred: {ex.Message}");
+            }
+        }
+    }
+
+    // Modify ListenForMessages to handle teacher login
     private void ListenForMessages()
     {
         byte[] buffer = new byte[1024];
@@ -743,11 +921,16 @@ public class TuioDemo : Form, TuioListener
                 if (bytesRead > 0)
                 {
                     macmessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    if (isTeacherLogin == false)
+                    {
+                        LoginForTeacher(macmessage); // Handle teacher login
+                    }
 
                     if (isLogin == false)
                     {
-                        Login(macmessage);
+                        Login(macmessage); // Handle student login
                     }
+                   
 
                     Debug.WriteLine($"Received from server: {macmessage}");
                 }
@@ -756,6 +939,90 @@ public class TuioDemo : Form, TuioListener
         catch (Exception ex)
         {
             Debug.WriteLine($"Connection lost: {ex.Message}");
+        }
+    }
+    private void WriteScoreToFile(string macAddress,int score, int mistakes)
+    {
+        string filePath = "student.txt"; // Define the path for the text file
+        string name = parts[1].Trim(); // Assuming parts[1].Trim() contains the name
+        bool nameFound = false;
+        List<string> lines = new List<string>(); // List to hold lines from the file
+
+        // Read existing records from the file
+        try
+        {
+            using (StreamReader reader = new StreamReader(filePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    // Split the line to get the name for comparison
+                    var data = line.Split(',');
+                    if (data.Length > 0 && data[0].Trim() == name)
+                    {
+                        // Update the line with new score and mistakes
+                        line = $"{name}, {score}, {mistakes}";
+                        nameFound = true; // Name found and updated
+                    }
+                    // Add the line to the list (updated or not)
+                    lines.Add(line);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error reading from file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return; // Exit if there's an error reading
+        }
+
+        // If the name was not found, add a new record
+        if (!nameFound)
+        {
+            lines.Add($"{name}, {score}, {mistakes}");
+        }
+
+        // Write the updated list back to the file
+        try
+        {
+            using (StreamWriter writer = new StreamWriter(filePath, false)) // 'false' for overwriting
+            {
+                foreach (var line in lines)
+                {
+                    writer.WriteLine(line);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error writing to file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+    }
+    private void LoadStudentRecords()
+    {
+        string filePath = "student.txt"; // Path to the text file
+
+        if (File.Exists(filePath))
+        {
+            studentRecords.Clear(); // Clear previous records
+            try
+            {
+                using (StreamReader reader = new StreamReader(filePath))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        studentRecords.Add(line); // Add each line to the list
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading from file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        else
+        {
+            MessageBox.Show("No student records found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 
