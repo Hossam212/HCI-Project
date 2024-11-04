@@ -40,7 +40,7 @@ public class TuioDemo : Form, TuioListener
 	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
 	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "DESKTOP-HOHKG61";
+    public string serverIP = "LAPTOP-E2THQTEG";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
@@ -66,6 +66,7 @@ public class TuioDemo : Form, TuioListener
     private bool isTeacherLogin = false;
     private List<string> studentRecords = new List<string>();
     private bool isShow = false;
+    private bool isPinch = false;
 
     private class StudentRecord
     {
@@ -738,6 +739,23 @@ public class TuioDemo : Form, TuioListener
             g.DrawString(text, font, Brushes.White, x, y); // Draw the text in white
 
         }
+        if (isPinch)
+        {
+            if (isRunning == true)
+            {
+                WriteScoreToFile("yomama",score,mistakes);
+            }
+            score = 0;
+            mistakes = 0;
+            isLogin = false;
+            isTeacherLogin = false;
+            isRunning = false;
+            isShow = false;
+            isPinch = false;
+
+            
+                
+        }
     }
 
     public void Login(String MacAdress)
@@ -845,7 +863,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "DESKTOP-HOHKG61"; // Server address
+        string server = "LAPTOP-E2THQTEG"; // Server address
         int port = 8000; // Server port
 
         try
@@ -908,6 +926,20 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
+
+    public void setpinch(String message)
+    {
+        string[] parts = message.Split(new char[] { ',' }, 2);
+        if (parts[0].Trim().Equals("pinching"))
+        {
+            isPinch = true;
+        }
+        else
+        {
+            isPinch = false;
+        }
+    }
+
     // Modify ListenForMessages to handle teacher login
     private void ListenForMessages()
     {
@@ -930,7 +962,10 @@ public class TuioDemo : Form, TuioListener
                     {
                         Login(macmessage); // Handle student login
                     }
-                   
+                   if(isLogin && isPinch == false || isTeacherLogin && isPinch==false)
+                    {
+                        setpinch(macmessage);
+                    }
 
                     Debug.WriteLine($"Received from server: {macmessage}");
                 }
