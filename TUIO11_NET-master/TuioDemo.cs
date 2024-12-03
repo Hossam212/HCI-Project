@@ -67,6 +67,7 @@ public class TuioDemo : Form, TuioListener
     private List<string> studentRecords = new List<string>();
     private bool isShow = false;
     private bool isPinch = false;
+    string playername;
 
     private class StudentRecord
     {
@@ -172,7 +173,7 @@ public class TuioDemo : Form, TuioListener
         }
         if (isRunning == true)
         {
-            WriteScoreToFile(macmessage, score, mistakes);
+            WriteScoreToFile(macmessage, score, mistakes,cegypt,cgermany,cspain);
             // Optionally, you can display a message confirming the save
             MessageBox.Show("Game data saved successfully!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
@@ -452,7 +453,7 @@ public class TuioDemo : Form, TuioListener
                                 break;
                             case 1:
 
-                                _= ActivateStartMenuOption(3);
+                                _ = ActivateStartMenuOption(3);
 
                                 break;
                             default:
@@ -560,7 +561,7 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
-        else if(isTeacherLogin==true&&isShow==true)
+        else if (isTeacherLogin == true && isShow == true)
         {
             LoadStudentRecords();
             // Draw the records if they exist
@@ -573,7 +574,7 @@ public class TuioDemo : Form, TuioListener
                 float yOffset = 100; // Starting Y position for records
                 foreach (var record in studentRecords)
                 {
-                    var p=record.Split(',');
+                    var p = record.Split(',');
                     string names = p[0].Trim();
                     string points = p[1].Trim();
                     string error = p[2].Trim();
@@ -587,7 +588,34 @@ public class TuioDemo : Form, TuioListener
             {
                 g.DrawString("No records found.", new Font("Arial", 14), Brushes.White, new PointF(450, 320));
             }
-        }    
+            if (objectList.Count > 0)
+            {
+                lock (objectList)
+                {
+                    foreach (TuioObject tobj in objectList.Values)
+                    {
+                        int ox = tobj.getScreenX(width);
+                        int oy = tobj.getScreenY(height);
+                        int size = height / 4;
+                        bool isCorrect = false; // To track if the object is correctly placed
+                        bool isWrong = false;
+
+                        g.TranslateTransform(ox, oy);
+                        g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
+                        g.TranslateTransform(-ox, -oy);
+                        switch (tobj.SymbolID)
+                        {
+                            case 1:
+
+                                _ = ActivateViewStudentRecords(3);
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+
+
 
         else if (isLogin == true && isRunning == false)
         {
@@ -642,7 +670,7 @@ public class TuioDemo : Form, TuioListener
                                 }
                                 else if (tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
                                 {
-                                    endBrush =  Brushes.DarkRed;
+                                    endBrush = Brushes.DarkRed;
                                     _ = ActivateStartMenuOption(2);
                                 }
                                 else
@@ -743,7 +771,7 @@ public class TuioDemo : Form, TuioListener
         {
             if (isRunning == true)
             {
-                WriteScoreToFile("yomama",score,mistakes);
+                WriteScoreToFile("yomama", score, mistakes, cegypt, cgermany, cspain);
             }
             score = 0;
             mistakes = 0;
@@ -751,7 +779,7 @@ public class TuioDemo : Form, TuioListener
             isTeacherLogin = false;
             isRunning = false;
             isShow = false;
-            isPinch = false;
+            isPinch=false;
 
             
                 
@@ -774,10 +802,31 @@ public class TuioDemo : Form, TuioListener
                         string studentName = line.Trim();
                         parts= studentName.Split(',');
                         studentName = parts[0].Trim();
+                        
+                        playername = parts[1].Trim();
                         // Compare the student name with the target name
                         if (studentName.Equals(macmessage, StringComparison.OrdinalIgnoreCase))
                         {
                             isLogin = true;
+                            using(StreamReader reader2=new StreamReader("student.txt"))
+                            {
+                                string line2;
+                                while ((line2 = reader2.ReadLine()) != null)
+                                {   
+                                    
+                                    string paststudentname = line2.Trim();
+                                    parts = paststudentname.Split(',');
+                                    paststudentname = parts[0].Trim();
+                                    if (playername == paststudentname)
+                                    {
+                                        cegypt = int.Parse(parts[3].Trim());
+                                        cgermany = int.Parse(parts[4].Trim());
+                                        cspain = int.Parse(parts[5].Trim());
+                                        score = int.Parse(parts[1].Trim());
+                                        mistakes = int.Parse(parts[2].Trim());
+                                    }
+                                }
+                            }
                             Invalidate();
                             Console.WriteLine($"{studentName} has successfully logged in.");
                             break; // Exit the loop once the student is found
@@ -976,7 +1025,7 @@ public class TuioDemo : Form, TuioListener
             Debug.WriteLine($"Connection lost: {ex.Message}");
         }
     }
-    private void WriteScoreToFile(string macAddress,int score, int mistakes)
+    /*private void WriteScoreToFile(string macAddress,int score, int mistakes)
     {
         string filePath = "student.txt"; // Define the path for the text file
         string name = parts[1].Trim(); // Assuming parts[1].Trim() contains the name
@@ -984,31 +1033,31 @@ public class TuioDemo : Form, TuioListener
         List<string> lines = new List<string>(); // List to hold lines from the file
 
         // Read existing records from the file
-        try
-        {
-            using (StreamReader reader = new StreamReader(filePath))
-            {
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    // Split the line to get the name for comparison
-                    var data = line.Split(',');
-                    if (data.Length > 0 && data[0].Trim() == name)
-                    {
-                        // Update the line with new score and mistakes
-                        line = $"{name}, {score}, {mistakes}";
-                        nameFound = true; // Name found and updated
-                    }
-                    // Add the line to the list (updated or not)
-                    lines.Add(line);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            MessageBox.Show($"Error reading from file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            return; // Exit if there's an error reading
-        }
+         try
+         {
+             using (StreamReader reader = new StreamReader(filePath))
+             {
+                 string line;
+                 while ((line = reader.ReadLine()) != null)
+                 {
+                     // Split the line to get the name for comparison
+                     var data = line.Split(',');
+                     if (data.Length > 0 && data[0].Trim() == name)
+                     {
+                         // Update the line with new score and mistakes
+                         line = $"{name}, {score}, {mistakes}";
+                         nameFound = true; // Name found and updated
+                     }
+                     // Add the line to the list (updated or not)
+                     lines.Add(line);
+                 }
+             }
+         }
+         catch (Exception ex)
+         {
+             MessageBox.Show($"Error reading from file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+             return; // Exit if there's an error reading
+         }
 
         // If the name was not found, add a new record
         if (!nameFound)
@@ -1031,7 +1080,30 @@ public class TuioDemo : Form, TuioListener
         {
             MessageBox.Show($"Error writing to file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }*/
+    private void WriteScoreToFile(string macAddress, int score, int mistakes,int cegypt,int cgermany, int cspain)
+    {
+        string filePath = "student.txt"; // Define the path for the text file
+        string name =playername; // Assuming parts[1].Trim() contains the name
+
+        // Create the new record
+        string newRecord = $"{name}, {score}, {mistakes} , {cegypt} ,{cgermany},{cspain}";
+
+        // Append the new record to the file
+        try
+        {
+            using (StreamWriter writer = new StreamWriter(filePath, true)) // 'true' for appending
+            {
+                writer.WriteLine(newRecord);
+            }
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Error writing to file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
+
+
     private void LoadStudentRecords()
     {
         string filePath = "student.txt"; // Path to the text file
