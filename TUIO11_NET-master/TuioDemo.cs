@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Timers;
 using System.Net.Mail;
+using static System.Windows.Forms.LinkLabel;
 
 
 public class TuioDemo : Form, TuioListener
@@ -25,6 +26,7 @@ public class TuioDemo : Form, TuioListener
 	private Dictionary<long, TuioCursor> cursorList;
 	private Dictionary<long, TuioBlob> blobList;
     Brush startBrush = Brushes.Green;
+    Brush showspecificplayerresults = Brushes.Purple;
     Brush endBrush = Brushes.Red;
     private int cgermany = 0;
 	private int cspain = 0;
@@ -40,7 +42,7 @@ public class TuioDemo : Form, TuioListener
 	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
 	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "LAPTOP-E2THQTEG";
+    public string serverIP = "MohammedAdnan";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
@@ -65,9 +67,12 @@ public class TuioDemo : Form, TuioListener
     string[] parts;
     private bool isTeacherLogin = false;
     private List<string> studentRecords = new List<string>();
+    private List<string> MyRecords = new List<string>();
+
     private bool isShow = false;
     private bool isPinch = false;
     string playername;
+    bool showmyresuts = false;
 
     private class StudentRecord
     {
@@ -294,6 +299,8 @@ public class TuioDemo : Form, TuioListener
         if(flag == 1)
         {
             isRunning = true;
+            showmyresuts = false;
+
         }
         else if (flag == 2)
         {
@@ -301,8 +308,14 @@ public class TuioDemo : Form, TuioListener
             client1.Close();
             this.Close();
         }
-        else if (flag == 3)
+        if(flag == 3)
         {
+            isRunning = false;
+            showmyresuts = true;
+        }
+        else if (flag == 4)
+        {
+            showmyresuts = false;
             isRunning = false;
         }
     }
@@ -311,8 +324,7 @@ public class TuioDemo : Form, TuioListener
         await Task.Delay(2000);
         if (flag == 1)
         {
-            isShow=true;
-            
+            isShow = true;
         }
         else if (flag == 2)
         {
@@ -323,6 +335,9 @@ public class TuioDemo : Form, TuioListener
         else if (flag == 3)
         {
             isShow = false;
+        }
+        else if (flag == 4) {
+            showmyresuts = false;
         }
     }
     protected override void OnPaintBackground(PaintEventArgs pevent)
@@ -452,9 +467,7 @@ public class TuioDemo : Form, TuioListener
                                 }
                                 break;
                             case 1:
-
-                                _ = ActivateStartMenuOption(3);
-
+                                _ = ActivateStartMenuOption(4);
                                 break;
                             default:
                                 // Use default rectangle for other 
@@ -512,7 +525,7 @@ public class TuioDemo : Form, TuioListener
                             {
                                 Console.WriteLine($"Object image not found: {objectImagePath}");
                                 // Fall back to drawing a rectangle
-                                g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                                //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
                             }
 
                             // Draw the mark or cross based on correctness
@@ -614,10 +627,7 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
-
-
-
-        else if (isLogin == true && isRunning == false)
+        else if (isLogin == true && isRunning == false && showmyresuts == false)
         {
             g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
             // Draw circle background
@@ -631,7 +641,7 @@ public class TuioDemo : Form, TuioListener
             g.FillPie(startBrush, 400, 100, menuSize1, menuSize1, startAngle, sweepAngle); // "Start" section
             startAngle += sweepAngle; // Move to next section
 
-            g.FillPie(startBrush, 400, 100, menuSize2, menuSize2, startAngle, sweepAngle); // "Middle" section
+            g.FillPie(showspecificplayerresults, 400, 100, menuSize2, menuSize2, startAngle, sweepAngle); // "Middle" section
             startAngle += sweepAngle; // Move to next section
 
             g.FillPie(endBrush, 400, 100, menuSize3, menuSize3, startAngle, sweepAngle); // "End" section
@@ -640,7 +650,8 @@ public class TuioDemo : Form, TuioListener
             g.FillPie(endBrush, 400, 100, menuSize4, menuSize4, startAngle, sweepAngle); // "Another" section
 
             // Draw labels for each section
-            g.DrawString("Start", new Font("Arial", 18), Brushes.White, new PointF(720, 280));
+            g.DrawString("Start", new Font("Arial", 18), Brushes.White, new PointF(690, 200));
+            g.DrawString("My results", new Font("Arial", 18), Brushes.White, new PointF(657, 380));
             g.DrawString("Exit", new Font("Arial", 18), Brushes.White, new PointF(420, 280));
 
             // Draw inner circle to create an empty effect
@@ -665,8 +676,13 @@ public class TuioDemo : Form, TuioListener
                                 if (tobj.AngleDegrees >= 20 && tobj.AngleDegrees <= 80)
                                 {
                                     startBrush = Brushes.DarkGreen;
-
+                                    showmyresuts = false;
                                     _ = ActivateStartMenuOption(1);
+                                }else if (tobj.AngleDegrees >= 70 && tobj.AngleDegrees <= 100)
+                                {
+                                    showspecificplayerresults = Brushes.DarkViolet;
+                                    isRunning = false;
+                                    _ = ActivateStartMenuOption(3);
                                 }
                                 else if (tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
                                 {
@@ -676,6 +692,7 @@ public class TuioDemo : Form, TuioListener
                                 else
                                 {
                                     startBrush = Brushes.Green;
+                                    showspecificplayerresults = Brushes.Purple;
                                     endBrush = Brushes.Red;
 
                                 }
@@ -783,6 +800,60 @@ public class TuioDemo : Form, TuioListener
 
             
                 
+        }
+        if(showmyresuts == true)
+        {
+            Invalidate();
+            LoadMyRecords();
+            // Draw the records if they exist
+            if (MyRecords.Count > 0)
+            {
+                g.DrawString("Name", new Font("Arial", 20, FontStyle.Bold), Brushes.Green, new PointF(200, 60));
+                g.DrawString("Score", new Font("Arial", 20, FontStyle.Bold), Brushes.Red, new PointF(600, 60));
+                g.DrawString("Mistake", new Font("Arial", 20, FontStyle.Bold), Brushes.White, new PointF(900, 60));
+
+                float yOffset = 100; // Starting Y position for records
+                foreach (var record in MyRecords)
+                {
+                    var p = record.Split(',');
+                    string names = p[0].Trim();
+                    string points = p[1].Trim();
+                    string error = p[2].Trim();
+                    g.DrawString(names, new Font("Arial", 14), Brushes.White, new PointF(200, yOffset));
+                    g.DrawString(points, new Font("Arial", 14), Brushes.White, new PointF(600, yOffset));
+                    g.DrawString(error, new Font("Arial", 14), Brushes.White, new PointF(900, yOffset));
+                    yOffset += 25; // Increase Y position for the next record
+                }
+            }
+            else
+            {
+                g.DrawString("No records found.", new Font("Arial", 14), Brushes.White, new PointF(450, 320));
+            }
+            if (objectList.Count > 0)
+            {
+                lock (objectList)
+                {
+                    foreach (TuioObject tobj in objectList.Values)
+                    {
+                        int ox = tobj.getScreenX(width);
+                        int oy = tobj.getScreenY(height);
+                        int size = height / 4;
+                        bool isCorrect = false; // To track if the object is correctly placed
+                        bool isWrong = false;
+
+                        g.TranslateTransform(ox, oy);
+                        g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
+                        g.TranslateTransform(-ox, -oy);
+                        switch (tobj.SymbolID)
+                        {
+                            case 1:
+
+                                _ = ActivateViewStudentRecords(4);
+                                break;
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -912,7 +983,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "LAPTOP-E2THQTEG"; // Server address
+        string server = "MohammedAdnan"; // Server address
         int port = 8000; // Server port
 
         try
@@ -974,7 +1045,6 @@ public class TuioDemo : Form, TuioListener
             }
         }
     }
-
 
     public void setpinch(String message)
     {
@@ -1103,7 +1173,6 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-
     private void LoadStudentRecords()
     {
         string filePath = "student.txt"; // Path to the text file
@@ -1119,6 +1188,41 @@ public class TuioDemo : Form, TuioListener
                     while ((line = reader.ReadLine()) != null)
                     {
                         studentRecords.Add(line); // Add each line to the list
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error reading from file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        else
+        {
+            MessageBox.Show("No student records found.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
+    private void LoadMyRecords()
+    {
+        string filePath = "student.txt"; // Path to the text file
+
+        if (File.Exists(filePath))
+        {
+            MyRecords.Clear(); // Clear previous records
+            try
+            {
+                using (StreamReader reader = new StreamReader(filePath))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        string paststudentname = line.Trim();
+                        parts = paststudentname.Split(',');
+                        paststudentname = parts[0].Trim();
+                        if (playername == paststudentname)
+                        {
+                           MyRecords.Add(line); // Add each line to the list
+                        }
                     }
                 }
             }
