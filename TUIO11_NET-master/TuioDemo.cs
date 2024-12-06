@@ -22,47 +22,48 @@ public class TuioDemo : Form, TuioListener
 {
     string macmessage;
     private TuioClient client;
-	private Dictionary<long, TuioObject> objectList;
-	private Dictionary<long, TuioCursor> cursorList;
-	private Dictionary<long, TuioBlob> blobList;
+    private Dictionary<long, TuioObject> objectList;
+    private Dictionary<long, TuioCursor> cursorList;
+    private Dictionary<long, TuioBlob> blobList;
     Brush startBrush = Brushes.Green;
     Brush showspecificplayerresults = Brushes.Purple;
     Brush endBrush = Brushes.Red;
     private int cgermany = 0;
-	private int cspain = 0;
-	private int cegypt = 0;
-	private int correctct = 0;
-	private int score = 0;    
-	private int mistakes = 0;
-	public static int width, height;
-	private int window_width = 1280;
-	private int window_height = 700;
-	private int window_left = 0;
-	private int window_top = 0;
-	private int screen_width = Screen.PrimaryScreen.Bounds.Width;
-	private int screen_height = Screen.PrimaryScreen.Bounds.Height;
+    private int cspain = 0;
+    private int cegypt = 0;
+    private int correctct = 0;
+    private int score = 0;
+    private int mistakes = 0;
+    public static int width, height;
+    private int window_width = 1280;
+    private int window_height = 700;
+    private int window_left = 0;
+    private int window_top = 0;
+    private int screen_width = Screen.PrimaryScreen.Bounds.Width;
+    private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "MohammedAdnan";
+    public string serverIP = "LAPTOP-E2THQTEG";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
     private int menuSize3 = 400;
     private int menuSize4 = 400;
     private bool fullscreen;
-	private bool verbose;
-	Font font = new Font("Arial", 10.0f);
-	SolidBrush fntBrush = new SolidBrush(Color.White);
-	SolidBrush bgrBrush = new SolidBrush(Color.FromArgb(0, 0, 64));
-	SolidBrush curBrush = new SolidBrush(Color.FromArgb(192, 0, 192));
-	SolidBrush objBrush = new SolidBrush(Color.FromArgb(64, 0, 0));
-	SolidBrush blbBrush = new SolidBrush(Color.FromArgb(64, 64, 64));
-	Pen curPen = new Pen(new SolidBrush(Color.Blue), 1);
-	private string objectImagePath;
-	private string backgroundImagePath;
-	private string markimagepath;
-	private string crossimagepath;
-	TcpClient client1;
-	NetworkStream stream;
+    private bool verbose;
+    Font font = new Font("Arial", 10.0f);
+    SolidBrush fntBrush = new SolidBrush(Color.White);
+    SolidBrush bgrBrush = new SolidBrush(Color.FromArgb(0, 0, 64));
+    SolidBrush curBrush = new SolidBrush(Color.FromArgb(192, 0, 192));
+    SolidBrush objBrush = new SolidBrush(Color.FromArgb(64, 0, 0));
+    SolidBrush blbBrush = new SolidBrush(Color.FromArgb(64, 64, 64));
+    Brush FntMenuClr = Brushes.White;
+    Pen curPen = new Pen(new SolidBrush(Color.Blue), 1);
+    private string objectImagePath;
+    private string backgroundImagePath;
+    private string markimagepath;
+    private string crossimagepath;
+    TcpClient client1;
+    NetworkStream stream;
     bool isLogin = false;
     string[] parts;
     private bool isTeacherLogin = false;
@@ -83,29 +84,29 @@ public class TuioDemo : Form, TuioListener
 
 
     public TuioDemo(int port)
-	{
-		verbose = false;
-		fullscreen = false;
-		width = window_width;
-		height = window_height;
+    {
+        verbose = false;
+        fullscreen = false;
+        width = window_width;
+        height = window_height;
 
-		this.MaximizeBox = false; // Disable the maximize button
-		this.MinimizeBox = true;
+        this.MaximizeBox = false; // Disable the maximize button
+        this.MinimizeBox = true;
 
-		this.ClientSize = new System.Drawing.Size(width, height);
-		this.Name = "TuioDemo";
-		this.Text = "TuioDemo";
+        this.ClientSize = new System.Drawing.Size(width, height);
+        this.Name = "TuioDemo";
+        this.Text = "TuioDemo";
 
-		this.Closing += new CancelEventHandler(Form_Closing);
-		this.KeyDown += new KeyEventHandler(Form_KeyDown);
+        this.Closing += new CancelEventHandler(Form_Closing);
+        this.KeyDown += new KeyEventHandler(Form_KeyDown);
 
-		this.SetStyle(ControlStyles.AllPaintingInWmPaint |
-						ControlStyles.UserPaint |
-						ControlStyles.DoubleBuffer, true);
+        this.SetStyle(ControlStyles.AllPaintingInWmPaint |
+                        ControlStyles.UserPaint |
+                        ControlStyles.DoubleBuffer, true);
 
-		objectList = new Dictionary<long, TuioObject>(128);
-		cursorList = new Dictionary<long, TuioCursor>(128);
-		blobList = new Dictionary<long, TuioBlob>(128);
+        objectList = new Dictionary<long, TuioObject>(128);
+        cursorList = new Dictionary<long, TuioCursor>(128);
+        blobList = new Dictionary<long, TuioBlob>(128);
 
         client = new TuioClient(port);
         client.addTuioListener(this);
@@ -116,61 +117,61 @@ public class TuioDemo : Form, TuioListener
     }
 
     private void Form_KeyDown(object sender, System.Windows.Forms.KeyEventArgs e)
-	{
+    {
 
-		if (e.KeyData == Keys.F1)
-		{
-			if (fullscreen == false)
-			{
+        if (e.KeyData == Keys.F1)
+        {
+            if (fullscreen == false)
+            {
 
-				width = screen_width;
-				height = screen_height;
+                width = screen_width;
+                height = screen_height;
 
-				window_left = this.Left;
-				window_top = this.Top;
+                window_left = this.Left;
+                window_top = this.Top;
 
-				this.FormBorderStyle = FormBorderStyle.None;
-				this.Left = 0;
-				this.Top = 0;
-				this.Width = screen_width;
-				this.Height = screen_height;
+                this.FormBorderStyle = FormBorderStyle.None;
+                this.Left = 0;
+                this.Top = 0;
+                this.Width = screen_width;
+                this.Height = screen_height;
 
-				fullscreen = true;
-			}
-			else
-			{
+                fullscreen = true;
+            }
+            else
+            {
 
-				width = window_width;
-				height = window_height;
+                width = window_width;
+                height = window_height;
 
-				this.FormBorderStyle = FormBorderStyle.Sizable;
-				this.Left = window_left;
-				this.Top = window_top;
-				this.Width = window_width;
-				this.Height = window_height;
+                this.FormBorderStyle = FormBorderStyle.Sizable;
+                this.Left = window_left;
+                this.Top = window_top;
+                this.Width = window_width;
+                this.Height = window_height;
 
-				fullscreen = false;
-			}
-		}
-		else if (e.KeyData == Keys.Escape)
-		{
+                fullscreen = false;
+            }
+        }
+        else if (e.KeyData == Keys.Escape)
+        {
             stream.Close();
             client1.Close();
             this.Close();
 
-		}
-		else if (e.KeyData == Keys.V)
-		{
-			verbose = !verbose;
-		}
+        }
+        else if (e.KeyData == Keys.V)
+        {
+            verbose = !verbose;
+        }
 
-	}
+    }
 
-	private void Form_Closing(object sender, System.ComponentModel.CancelEventArgs e)
-	{
-		client.removeTuioListener(this);
+    private void Form_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+    {
+        client.removeTuioListener(this);
 
-		client.disconnect();
+        client.disconnect();
 
         if (listenerThread != null && listenerThread.IsAlive)
         {
@@ -178,90 +179,90 @@ public class TuioDemo : Form, TuioListener
         }
         if (isRunning == true)
         {
-            WriteScoreToFile(macmessage, score, mistakes,cegypt,cgermany,cspain);
+            WriteScoreToFile(macmessage, score, mistakes, cegypt, cgermany, cspain);
             // Optionally, you can display a message confirming the save
             MessageBox.Show("Game data saved successfully!", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-        
+
         stream?.Close();
 
         System.Environment.Exit(0);
-	}
+    }
 
-	public void addTuioObject(TuioObject o)
-	{
-		lock (objectList)
-		{
-			objectList.Add(o.SessionID, o);
-		}
-		if (verbose) Console.WriteLine("add obj " + o.SymbolID + " (" + o.SessionID + ") " + o.X + " " + o.Y + " " + o.Angle);
-	}
+    public void addTuioObject(TuioObject o)
+    {
+        lock (objectList)
+        {
+            objectList.Add(o.SessionID, o);
+        }
+        if (verbose) Console.WriteLine("add obj " + o.SymbolID + " (" + o.SessionID + ") " + o.X + " " + o.Y + " " + o.Angle);
+    }
 
-	public void updateTuioObject(TuioObject o)
-	{
+    public void updateTuioObject(TuioObject o)
+    {
 
-		if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
-	}
+        if (verbose) Console.WriteLine("set obj " + o.SymbolID + " " + o.SessionID + " " + o.X + " " + o.Y + " " + o.Angle + " " + o.MotionSpeed + " " + o.RotationSpeed + " " + o.MotionAccel + " " + o.RotationAccel);
+    }
 
-	public void removeTuioObject(TuioObject o)
-	{
-		lock (objectList)
-		{
-			objectList.Remove(o.SessionID);
-		}
-		if (verbose) Console.WriteLine("del obj " + o.SymbolID + " (" + o.SessionID + ")");
-	}
+    public void removeTuioObject(TuioObject o)
+    {
+        lock (objectList)
+        {
+            objectList.Remove(o.SessionID);
+        }
+        if (verbose) Console.WriteLine("del obj " + o.SymbolID + " (" + o.SessionID + ")");
+    }
 
-	public void addTuioCursor(TuioCursor c)
-	{
-		lock (cursorList)
-		{
-			cursorList.Add(c.SessionID, c);
-		}
-		if (verbose) Console.WriteLine("add cur " + c.CursorID + " (" + c.SessionID + ") " + c.X + " " + c.Y);
-	}
+    public void addTuioCursor(TuioCursor c)
+    {
+        lock (cursorList)
+        {
+            cursorList.Add(c.SessionID, c);
+        }
+        if (verbose) Console.WriteLine("add cur " + c.CursorID + " (" + c.SessionID + ") " + c.X + " " + c.Y);
+    }
 
-	public void updateTuioCursor(TuioCursor c)
-	{
-		if (verbose) Console.WriteLine("set cur " + c.CursorID + " (" + c.SessionID + ") " + c.X + " " + c.Y + " " + c.MotionSpeed + " " + c.MotionAccel);
-	}
+    public void updateTuioCursor(TuioCursor c)
+    {
+        if (verbose) Console.WriteLine("set cur " + c.CursorID + " (" + c.SessionID + ") " + c.X + " " + c.Y + " " + c.MotionSpeed + " " + c.MotionAccel);
+    }
 
-	public void removeTuioCursor(TuioCursor c)
-	{
-		lock (cursorList)
-		{
-			cursorList.Remove(c.SessionID);
-		}
-		if (verbose) Console.WriteLine("del cur " + c.CursorID + " (" + c.SessionID + ")");
-	}
+    public void removeTuioCursor(TuioCursor c)
+    {
+        lock (cursorList)
+        {
+            cursorList.Remove(c.SessionID);
+        }
+        if (verbose) Console.WriteLine("del cur " + c.CursorID + " (" + c.SessionID + ")");
+    }
 
-	public void addTuioBlob(TuioBlob b)
-	{
-		lock (blobList)
-		{
-			blobList.Add(b.SessionID, b);
-		}
-		if (verbose) Console.WriteLine("add blb " + b.BlobID + " (" + b.SessionID + ") " + b.X + " " + b.Y + " " + b.Angle + " " + b.Width + " " + b.Height + " " + b.Area);
-	}
+    public void addTuioBlob(TuioBlob b)
+    {
+        lock (blobList)
+        {
+            blobList.Add(b.SessionID, b);
+        }
+        if (verbose) Console.WriteLine("add blb " + b.BlobID + " (" + b.SessionID + ") " + b.X + " " + b.Y + " " + b.Angle + " " + b.Width + " " + b.Height + " " + b.Area);
+    }
 
-	public void updateTuioBlob(TuioBlob b)
-	{
+    public void updateTuioBlob(TuioBlob b)
+    {
 
-		if (verbose) Console.WriteLine("set blb " + b.BlobID + " (" + b.SessionID + ") " + b.X + " " + b.Y + " " + b.Angle + " " + b.Width + " " + b.Height + " " + b.Area + " " + b.MotionSpeed + " " + b.RotationSpeed + " " + b.MotionAccel + " " + b.RotationAccel);
-	}
+        if (verbose) Console.WriteLine("set blb " + b.BlobID + " (" + b.SessionID + ") " + b.X + " " + b.Y + " " + b.Angle + " " + b.Width + " " + b.Height + " " + b.Area + " " + b.MotionSpeed + " " + b.RotationSpeed + " " + b.MotionAccel + " " + b.RotationAccel);
+    }
 
-	public void removeTuioBlob(TuioBlob b)
-	{
-		lock (blobList)
-		{
-			blobList.Remove(b.SessionID);
-		}
-		if (verbose) Console.WriteLine("del blb " + b.BlobID + " (" + b.SessionID + ")");
-	}
+    public void removeTuioBlob(TuioBlob b)
+    {
+        lock (blobList)
+        {
+            blobList.Remove(b.SessionID);
+        }
+        if (verbose) Console.WriteLine("del blb " + b.BlobID + " (" + b.SessionID + ")");
+    }
 
-	public void refresh(TuioTime frameTime)
-	{
-		Invalidate();
+    public void refresh(TuioTime frameTime)
+    {
+        Invalidate();
     }
 
     private void showText(Graphics g)
@@ -293,10 +294,10 @@ public class TuioDemo : Form, TuioListener
         g.DrawString("Mistakes: " + mistakes, font, blackBrush, new PointF(mistakesX + 10, mistakesY + 10));
     }
 
-    private async Task ActivateStartMenuOption( int flag)
+    private async Task ActivateStartMenuOption(int flag)
     {
-        await Task.Delay(2000);
-        if(flag == 1)
+        
+        if (flag == 1)
         {
             isRunning = true;
             showmyresuts = false;
@@ -308,7 +309,7 @@ public class TuioDemo : Form, TuioListener
             client1.Close();
             this.Close();
         }
-        if(flag == 3)
+        if (flag == 3)
         {
             isRunning = false;
             showmyresuts = true;
@@ -321,7 +322,6 @@ public class TuioDemo : Form, TuioListener
     }
     private async Task ActivateViewStudentRecords(int flag)
     {
-        await Task.Delay(2000);
         if (flag == 1)
         {
             isShow = true;
@@ -336,15 +336,49 @@ public class TuioDemo : Form, TuioListener
         {
             isShow = false;
         }
-        else if (flag == 4) {
+        else if (flag == 4)
+        {
             showmyresuts = false;
         }
     }
-    protected override void OnPaintBackground(PaintEventArgs pevent)
-	{
-		// Getting the graphics object
-		Graphics g = pevent.Graphics;
-		g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
+
+    protected void drawmenu(PaintEventArgs prevent,Graphics g)
+    {
+        Invalidate();
+        g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
+        // Draw circle background
+        g.FillEllipse(bgrBrush, 400, 100, 400, 400);
+
+        // Define angles for each section
+        float startAngle = 270; // Starting angle for the first section
+        float sweepAngle = 90;  // Angle for each section
+
+        // Draw sections
+        g.FillPie(startBrush, 400, 100, menuSize1, menuSize1, startAngle, sweepAngle); // "Start" section
+        startAngle += sweepAngle; // Move to next section
+
+        g.FillPie(showspecificplayerresults, 400, 100, menuSize2, menuSize2, startAngle, sweepAngle); // "Middle" section
+        startAngle += sweepAngle; // Move to next section
+
+        g.FillPie(endBrush, 400, 100, menuSize3, menuSize3, startAngle, sweepAngle); // "End" section
+        startAngle += sweepAngle; // Move to next section
+
+        g.FillPie(endBrush, 400, 100, menuSize4, menuSize4, startAngle, sweepAngle); // "Another" section
+
+        // Draw labels for each section
+        g.DrawString("Start", new Font("Arial", 18), FntMenuClr, new PointF(690, 200));
+        g.DrawString("My results", new Font("Arial", 18), FntMenuClr, new PointF(657, 380));
+        g.DrawString("Exit", new Font("Arial", 18), FntMenuClr, new PointF(420, 280));
+
+        // Draw inner circle to create an empty effect
+        g.FillEllipse(bgrBrush, 500, 200, 200, 200); // Adjust size and position as needed
+    }
+
+    protected override async void OnPaintBackground(PaintEventArgs pevent)
+    {
+        // Getting the graphics object
+        Graphics g = pevent.Graphics;
+        g.FillRectangle(bgrBrush, new Rectangle(0, 0, width, height));
 
         if (isRunning && isLogin)
         {
@@ -629,34 +663,7 @@ public class TuioDemo : Form, TuioListener
         }
         else if (isLogin == true && isRunning == false && showmyresuts == false)
         {
-            g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
-            // Draw circle background
-            g.FillEllipse(bgrBrush, 400, 100, 400, 400);
-
-            // Define angles for each section
-            float startAngle = 270; // Starting angle for the first section
-            float sweepAngle = 90;  // Angle for each section
-
-            // Draw sections
-            g.FillPie(startBrush, 400, 100, menuSize1, menuSize1, startAngle, sweepAngle); // "Start" section
-            startAngle += sweepAngle; // Move to next section
-
-            g.FillPie(showspecificplayerresults, 400, 100, menuSize2, menuSize2, startAngle, sweepAngle); // "Middle" section
-            startAngle += sweepAngle; // Move to next section
-
-            g.FillPie(endBrush, 400, 100, menuSize3, menuSize3, startAngle, sweepAngle); // "End" section
-            startAngle += sweepAngle; // Move to next section
-
-            g.FillPie(endBrush, 400, 100, menuSize4, menuSize4, startAngle, sweepAngle); // "Another" section
-
-            // Draw labels for each section
-            g.DrawString("Start", new Font("Arial", 18), Brushes.White, new PointF(690, 200));
-            g.DrawString("My results", new Font("Arial", 18), Brushes.White, new PointF(657, 380));
-            g.DrawString("Exit", new Font("Arial", 18), Brushes.White, new PointF(420, 280));
-
-            // Draw inner circle to create an empty effect
-            g.FillEllipse(bgrBrush, 500, 200, 200, 200); // Adjust size and position as needed
-
+            drawmenu(pevent, g);
             if (objectList.Count > 0)
             {
                 lock (objectList)
@@ -675,26 +682,47 @@ public class TuioDemo : Form, TuioListener
                             case 1:
                                 if (tobj.AngleDegrees >= 20 && tobj.AngleDegrees <= 80)
                                 {
-                                    startBrush = Brushes.DarkGreen;
-                                    showmyresuts = false;
-                                    _ = ActivateStartMenuOption(1);
-                                }else if (tobj.AngleDegrees >= 70 && tobj.AngleDegrees <= 100)
-                                {
+                                    startBrush = Brushes.White;
+                                    FntMenuClr = Brushes.Black;
                                     showspecificplayerresults = Brushes.DarkViolet;
-                                    isRunning = false;
-                                    _ = ActivateStartMenuOption(3);
-                                }
-                                else if (tobj.AngleDegrees >= 300 && tobj.AngleDegrees <= 340)
-                                {
                                     endBrush = Brushes.DarkRed;
-                                    _ = ActivateStartMenuOption(2);
+                                }
+                                else if (tobj.AngleDegrees >= 90 && tobj.AngleDegrees <= 200)
+                                {
+                                    startBrush = Brushes.Green;
+                                    FntMenuClr = Brushes.Black;
+                                    endBrush = Brushes.DarkRed;
+                                    showspecificplayerresults = Brushes.White;
+                                }
+                                else if (tobj.AngleDegrees >= 220 && tobj.AngleDegrees <= 340)
+                                {
+                                    endBrush = Brushes.White;
+                                    startBrush = Brushes.Green;
+                                    FntMenuClr = Brushes.Black;
+                                    showspecificplayerresults = Brushes.DarkViolet;
                                 }
                                 else
                                 {
                                     startBrush = Brushes.Green;
                                     showspecificplayerresults = Brushes.Purple;
                                     endBrush = Brushes.Red;
-
+                                }
+                                Invalidate();
+                                drawmenu(pevent, g);
+                                Thread.Sleep(3000);
+                                if (tobj.AngleDegrees >= 20 && tobj.AngleDegrees <= 80)
+                                {
+                                    showmyresuts = false;
+                                    _ = ActivateStartMenuOption(1);
+                                }
+                                else if (tobj.AngleDegrees >= 90 && tobj.AngleDegrees <= 200)
+                                {
+                                    isRunning = false;
+                                    _ = ActivateStartMenuOption(3);
+                                }
+                                else if (tobj.AngleDegrees >= 220 && tobj.AngleDegrees <= 340)
+                                {
+                                    _ = ActivateStartMenuOption(2);
                                 }
                                 break;
                         }
@@ -747,6 +775,7 @@ public class TuioDemo : Form, TuioListener
                         switch (tobj.SymbolID)
                         {
                             case 1:
+                                Thread.Sleep(3000);
                                 if (tobj.AngleDegrees >= 20 && tobj.AngleDegrees <= 80)
                                 {
                                     startBrush = Brushes.DarkGreen;
@@ -773,7 +802,7 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
-        if (isLogin == false&& isTeacherLogin==false)
+        if (isLogin == false && isTeacherLogin == false)
         {
             string text = "Login";
             Font font = new Font("Arial", 24, FontStyle.Bold);
@@ -796,12 +825,12 @@ public class TuioDemo : Form, TuioListener
             isTeacherLogin = false;
             isRunning = false;
             isShow = false;
-            isPinch=false;
+            isPinch = false;
 
-            
-                
+
+
         }
-        if(showmyresuts == true)
+        if (showmyresuts == true)
         {
             Invalidate();
             LoadMyRecords();
@@ -857,113 +886,168 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-    public void Login(String MacAdress)
-    {
-        if (isLogin == false)
+        public void Login(String MacAdress)
         {
-            try
+            string studentName="";
+            if (isLogin == false)
             {
-                // Open the loginstudent.txt file and read each line
-                using (StreamReader reader = new StreamReader("loginstudent.txt"))
+                try
                 {
-                    string line;
-                    while ((line = reader.ReadLine()) != null)
+                    // Open the loginstudent.txt file and read each line
+                    using (StreamReader reader = new StreamReader("loginstudent.txt"))
                     {
-                        // Trim the line to remove any whitespace
-                        string studentName = line.Trim();
-                        parts= studentName.Split(',');
-                        studentName = parts[0].Trim();
-                        
-                        playername = parts[1].Trim();
-                        // Compare the student name with the target name
-                        if (studentName.Equals(macmessage, StringComparison.OrdinalIgnoreCase))
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
                         {
-                            isLogin = true;
-                            using(StreamReader reader2=new StreamReader("student.txt"))
+                            // Trim the line to remove any whitespace
+                            studentName = line.Trim();
+                            parts = studentName.Split(',');
+                            studentName = parts[0].Trim();
+
+                            playername = parts[1].Trim();
+
+                            // Compare the student name with the target name
+                            if (studentName.Equals(macmessage, StringComparison.OrdinalIgnoreCase))
                             {
-                                string line2;
-                                while ((line2 = reader2.ReadLine()) != null)
-                                {   
-                                    
-                                    string paststudentname = line2.Trim();
-                                    parts = paststudentname.Split(',');
-                                    paststudentname = parts[0].Trim();
-                                    if (playername == paststudentname)
-                                    {
-                                        cegypt = int.Parse(parts[3].Trim());
-                                        cgermany = int.Parse(parts[4].Trim());
-                                        cspain = int.Parse(parts[5].Trim());
-                                        score = int.Parse(parts[1].Trim());
-                                        mistakes = int.Parse(parts[2].Trim());
-                                    }
-                                }
+                           
+                                isLogin = true;
+                                break;
                             }
-                            Invalidate();
-                            Console.WriteLine($"{studentName} has successfully logged in.");
-                            break; // Exit the loop once the student is found
                         }
                     }
+                    if (playername != "")
+                    {
+                        using (StreamReader reader2 = new StreamReader("student.txt"))
+                        {
+                            string line2;
+                            while ((line2 = reader2.ReadLine()) != null)
+                            {
+
+                                string paststudentname = line2.Trim();
+                                parts = paststudentname.Split(',');
+                                paststudentname = parts[0].Trim();
+                                if (playername == paststudentname)
+                                {
+                                    cegypt = int.Parse(parts[3].Trim());
+                                    cgermany = int.Parse(parts[4].Trim());
+                                    cspain = int.Parse(parts[5].Trim());
+                                    score = int.Parse(parts[1].Trim());
+                                    mistakes = int.Parse(parts[2].Trim());
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        using (StudentNameForm nameForm = new StudentNameForm())
+                        {
+                            if (nameForm.ShowDialog() == DialogResult.OK && playername=="")
+                            {
+                                playername = nameForm.StudentName;
+
+                            // Append the new student to the "student.txt" file
+                            try
+                            {
+                                // Read all lines into memory
+                                string[] lines = File.ReadAllLines("loginstudent.txt");
+
+                                for (int i = 0; i < lines.Length; i++)
+                                {
+                                    string[] parts = lines[i].Split(',');
+                                    string macInFile = parts[0].Trim();
+
+                                    // Locate the line with the current MAC address
+                                    if (macInFile.Equals(studentName, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        // Update the line by appending the playername
+                                        lines[i] = $"{macInFile},{playername}";
+                                        break;
+                                    }
+                                }
+
+                                // Write all lines back to the file
+                                File.WriteAllLines("loginstudent.txt", lines);
+
+                                MessageBox.Show("Student name updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            catch (Exception ex)
+                                {
+                                    MessageBox.Show($"Failed to update file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                }
+
+                                // Update the current session's variables
+                                cegypt = 0;
+                                cgermany = 0;
+                                cspain = 0;
+                                score = 0;
+                                mistakes = 0;
+
+                                Invalidate(); // Refresh the main form
+                            }
+                        }
+                    }
+                    Invalidate();
+                    Console.WriteLine($"{studentName} has successfully logged in.");
+                }
+                catch (FileNotFoundException)
+                {
+                    Console.WriteLine("The file loginstudent.txt was not found.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"An error occurred: {ex.Message}");
                 }
             }
-            catch (FileNotFoundException)
-            {
-                Console.WriteLine("The file loginstudent.txt was not found.");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred: {ex.Message}");
-            }
+
+
+
         }
 
-
-
-    }
-
     public static void Main(String[] argv)
-	{
-		int port = 0;
-		switch (argv.Length)
-		{
-			case 1:
-				port = int.Parse(argv[0], null);
-				if (port == 0) goto default;
-				break;
-			case 0:
-				port = 3333;
-				break;
-			default:
-				Console.WriteLine("usage: mono TuioDemo [port]");
-				System.Environment.Exit(0);
-				break;
-		}
+    {
+        int port = 0;
+        switch (argv.Length)
+        {
+            case 1:
+                port = int.Parse(argv[0], null);
+                if (port == 0) goto default;
+                break;
+            case 0:
+                port = 3333;
+                break;
+            default:
+                Console.WriteLine("usage: mono TuioDemo [port]");
+                System.Environment.Exit(0);
+                break;
+        }
 
         TuioDemo app = new TuioDemo(port);
         Application.Run(app);
-	}
+    }
 
     public void SendCountryName(TuioObject markerData)
     {
-		
+
         try
         {
-            
+
             string countryName = "keep trying";
             // Replace with your TUIO marker data
             switch (markerData.SymbolID)
-			{
+            {
                 case 4:  // Germany case
                     countryName = $"Germany is in the correct spot!! {markerData.AngleDegrees}";
-					break;
+                    break;
                 case 3:  // Spain case
                     countryName = $"Spain is in the correct spot!! {markerData.AngleDegrees}";
-					break;
+                    break;
                 case 0:  // Egypt case
                     countryName = $"Egypt is in the correct spot!! {markerData.AngleDegrees}";
-					break;
-				default:
-					break;
+                    break;
+                default:
+                    break;
             }
-            
+
 
             // Convert the marker data to byte array
             byte[] data = Encoding.UTF8.GetBytes(countryName);
@@ -983,7 +1067,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "MohammedAdnan"; // Server address
+        string server = "LAPTOP-E2THQTEG"; // Server address
         int port = 8000; // Server port
 
         try
@@ -1081,7 +1165,7 @@ public class TuioDemo : Form, TuioListener
                     {
                         Login(macmessage); // Handle student login
                     }
-                   if(isLogin && isPinch == false || isTeacherLogin && isPinch==false)
+                    if (isLogin && isPinch == false || isTeacherLogin && isPinch == false)
                     {
                         setpinch(macmessage);
                     }
@@ -1151,10 +1235,10 @@ public class TuioDemo : Form, TuioListener
             MessageBox.Show($"Error writing to file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }*/
-    private void WriteScoreToFile(string macAddress, int score, int mistakes,int cegypt,int cgermany, int cspain)
+    private void WriteScoreToFile(string macAddress, int score, int mistakes, int cegypt, int cgermany, int cspain)
     {
         string filePath = "student.txt"; // Define the path for the text file
-        string name =playername; // Assuming parts[1].Trim() contains the name
+        string name = playername; // Assuming parts[1].Trim() contains the name
 
         // Create the new record
         string newRecord = $"{name}, {score}, {mistakes} , {cegypt} ,{cgermany},{cspain}";
@@ -1221,7 +1305,7 @@ public class TuioDemo : Form, TuioListener
                         paststudentname = parts[0].Trim();
                         if (playername == paststudentname)
                         {
-                           MyRecords.Add(line); // Add each line to the list
+                            MyRecords.Add(line); // Add each line to the list
                         }
                     }
                 }
