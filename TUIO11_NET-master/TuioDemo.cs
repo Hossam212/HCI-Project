@@ -352,10 +352,7 @@ public class TuioDemo : Form, TuioListener
     protected void drawmenu(PaintEventArgs prevent, Graphics g)
     {
         Invalidate();
-        if (isPinch)
-        {
-            g.FillEllipse(Brushes.Red, pinchx, pinchy, 400, 400);
-        }
+
         
         g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
         // Draw circle background
@@ -846,7 +843,7 @@ public class TuioDemo : Form, TuioListener
             //isPinch = false;
 
             // Check if 5 seconds have passed since the last pinch
-            if ((DateTime.Now - lastPinchTime).TotalSeconds <= 5)
+            if ((DateTime.Now - lastPinchTime).TotalMilliseconds <= 500)
             {
                 // Draw the circle at the pinch coordinates
                 g.FillEllipse(Brushes.Red, pinchx, pinchy , 400, 400);
@@ -1176,10 +1173,12 @@ public class TuioDemo : Form, TuioListener
             }
 
             lastPinchTime = currentDateTime; // Update the last pinch time
+            Invalidate();
         }
         else
         {
             isPinch = false; // Set isPinch to false
+            Invalidate();
         }
     }
 
