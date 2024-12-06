@@ -77,6 +77,9 @@ public class TuioDemo : Form, TuioListener
     private int pinchx = 0;
     private int pinchy = 0;
     private DateTime lastPinchTime = DateTime.MinValue;
+    private string emotionmessage = "";
+    private string country = "";
+    private string facename = "";
     string playername;
     bool showmyresuts = false;
 
@@ -909,6 +912,51 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
+        if (isLogin && emotionmessage!="")
+        {
+            Font font = new Font("Arial", 16, FontStyle.Bold);
+
+            // Specify the color of the text
+            Brush brush = new SolidBrush(Color.White);
+
+            // Specify the position of the text (top-left corner)
+            PointF point = new PointF(10, 10);
+
+            // Draw the emotion message on the screen
+            g.DrawString(emotionmessage, font, brush, point);
+        }
+        if (isRunning == true && country != "" && isLogin == true)
+        {
+            // Create a font for the text
+            Font font = new Font("Arial", 20, FontStyle.Bold);
+
+            // Set the default color for the text+
+            Brush brush = new SolidBrush(Color.White);
+
+            // Change the color based on the country
+            if (country.Equals("egypt", StringComparison.OrdinalIgnoreCase))
+            {
+                brush = new SolidBrush(Color.Red);
+            }
+            else if (country.Equals("spain", StringComparison.OrdinalIgnoreCase))
+            {
+                brush = new SolidBrush(Color.OrangeRed);
+            }
+            else if (country.Equals("germany", StringComparison.OrdinalIgnoreCase))
+            {
+                brush = new SolidBrush(Color.Black);
+            }
+
+
+            SizeF textSize = g.MeasureString(country, font);
+            PointF point = new PointF(
+                g.VisibleClipBounds.Width - textSize.Width - 10, // Right-align with a 10-pixel margin
+                10 // 10-pixel margin from the top
+            );
+
+            // Draw the country message on the screen
+            g.DrawString(country, font, brush, point);
+        }
     }
 
     public void Login(String MacAdress)
@@ -1182,6 +1230,60 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
+    public void getface(string message)
+    {
+        string[] parts = message.Split(':');
+
+        if (parts.Length > 1 && parts[0].Trim().Equals("RECOGNIZED"))
+        {
+            // Extract the name part
+            string recognizedName = parts[1].Trim();
+            isLogin = true;
+            playername = recognizedName;
+        }
+        else
+        {
+            isLogin = false;
+        }
+
+    }
+
+    public void showemotion(string message)
+    {
+        if (message.StartsWith("EMOTION:"))
+        {
+            // Find the start of the emotion message (after "EMOTION:")
+            int startIndex = "EMOTION:".Length;
+
+            // Extract everything after "EMOTION:"
+            string extractedMessage = message.Substring(startIndex);
+
+            // Remove any additional trailing text (e.g., "SENDTO") if present
+            // This will keep only the emotion part (e.g., "happy")
+            int endIndex = extractedMessage.IndexOfAny(new char[] { ' ', ',', '|', '\r', '\n' });
+            if (endIndex != -1)
+            {
+                extractedMessage = extractedMessage.Substring(0, endIndex);
+            }
+
+            emotionmessage = extractedMessage.Trim();
+        }
+        else
+        {
+            emotionmessage = "";
+        }
+    }
+
+    public void showcountry(string message)
+    {
+        string[] parts = message.Split(',');
+        if (parts.Length > 1)
+        {
+            country = parts[0].Trim();
+        }
+    }
+
+
     // Modify ListenForMessages to handle teacher login
     private void ListenForMessages()
     {
@@ -1195,6 +1297,10 @@ public class TuioDemo : Form, TuioListener
                 if (bytesRead > 0)
                 {
                     macmessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                    if (isLogin == false)
+                    {
+                        getface(macmessage);
+                    }
                     if (isTeacherLogin == false)
                     {
                         LoginForTeacher(macmessage); // Handle teacher login
@@ -1207,6 +1313,15 @@ public class TuioDemo : Form, TuioListener
                     {
                         setpinch(macmessage);
                     }
+                    if (isLogin == true)
+                    {
+                        showemotion(macmessage);
+                    }
+                    if(isLogin && isRunning == true)
+                    {
+                        showcountry(macmessage);
+                    }
+                   
 
                     Debug.WriteLine($"Received from server: {macmessage}");
                 }
