@@ -44,7 +44,7 @@ public class TuioDemo : Form, TuioListener
     private int screen_width = Screen.PrimaryScreen.Bounds.Width;
     private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "MohammedAdnan";
+    public string serverIP = "LAPTOP-E2THQTEG";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
@@ -74,6 +74,9 @@ public class TuioDemo : Form, TuioListener
 
     private bool isShow = false;
     private bool isPinch = false;
+    private int pinchx = 0;
+    private int pinchy = 0;
+    private DateTime lastPinchTime = DateTime.MinValue;
     string playername;
     bool showmyresuts = false;
 
@@ -349,6 +352,11 @@ public class TuioDemo : Form, TuioListener
     protected void drawmenu(PaintEventArgs prevent, Graphics g)
     {
         Invalidate();
+        if (isPinch)
+        {
+            g.FillEllipse(Brushes.Red, pinchx, pinchy, 400, 400);
+        }
+        
         g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
         // Draw circle background
         g.FillEllipse(bgrBrush, 400, 100, 400, 400);
@@ -634,10 +642,10 @@ public class TuioDemo : Form, TuioListener
 
                     if (!displayedNames.Contains(names)) // Check if the name has already been displayed
                     {
-                        int avgrecord=0;
-                        int avgmistake=0;
+                        int avgrecord = 0;
+                        int avgmistake = 0;
                         int ct = 0;
-                        foreach( var value in studentRecords)
+                        foreach (var value in studentRecords)
                         {
                             var pn = value.Split(',');
                             if (names == pn[0].Trim())
@@ -649,15 +657,15 @@ public class TuioDemo : Form, TuioListener
                         }
 
                         g.DrawString(names, new Font("Arial", 14), Brushes.White, new PointF(200, yOffset));
-                        g.DrawString((avgrecord/ct).ToString(), new Font("Arial", 14), Brushes.White, new PointF(600, yOffset));
-                        g.DrawString((avgmistake/ct).ToString(), new Font("Arial", 14), Brushes.White, new PointF(900, yOffset));
+                        g.DrawString((avgrecord / ct).ToString(), new Font("Arial", 14), Brushes.White, new PointF(600, yOffset));
+                        g.DrawString((avgmistake / ct).ToString(), new Font("Arial", 14), Brushes.White, new PointF(900, yOffset));
 
                         displayedNames.Add(names); // Mark the name as displayed
                         yOffset += 25; // Increase Y position for the next record
                     }
                 }
             }
-            else if(studentRecords.Count < 0 && Showspiceficstudent == false)
+            else if (studentRecords.Count < 0 && Showspiceficstudent == false)
             {
                 g.DrawString("No records found.", new Font("Arial", 14), Brushes.White, new PointF(450, 320));
             }
@@ -683,7 +691,7 @@ public class TuioDemo : Form, TuioListener
                             case 5:
                                 Invalidate();
                                 Showspiceficstudent = true;
-                                Namespiceficstudent = "MohammedAdnan";
+                                Namespiceficstudent = "momo";
                                 break;
                             case 7:
                                 Showspiceficstudent = false;
@@ -693,7 +701,7 @@ public class TuioDemo : Form, TuioListener
                     }
                 }
             }
-            if(Showspiceficstudent == true)
+            if (Showspiceficstudent == true)
             {
                 Loadspecificstudent(Namespiceficstudent, g);
             }
@@ -825,19 +833,29 @@ public class TuioDemo : Form, TuioListener
         }
         if (isPinch)
         {
-            if (isRunning == true)
+            //if (isRunning == true)
+            //{
+            //    WriteScoreToFile("yomama", score, mistakes, cegypt, cgermany, cspain);
+            //}
+            //score = 0;
+            //mistakes = 0;
+            //isLogin = false;
+            //isTeacherLogin = false;
+            //isRunning = false;
+            //isShow = false;
+            //isPinch = false;
+
+            // Check if 5 seconds have passed since the last pinch
+            if ((DateTime.Now - lastPinchTime).TotalSeconds <= 5)
             {
-                WriteScoreToFile("yomama", score, mistakes, cegypt, cgermany, cspain);
+                // Draw the circle at the pinch coordinates
+                g.FillEllipse(Brushes.Red, pinchx, pinchy , 400, 400);
             }
-            score = 0;
-            mistakes = 0;
-            isLogin = false;
-            isTeacherLogin = false;
-            isRunning = false;
-            isShow = false;
-            isPinch = false;
-
-
+            else
+            {
+                // Remove the circle if 5 seconds have passed
+                isPinch = false;
+            }
 
         }
         if (showmyresuts == true)
@@ -896,7 +914,7 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-   public void Login(String MacAdress)
+    public void Login(String MacAdress)
     {
         string studentName = "";
         if (isLogin == false)
@@ -1077,7 +1095,7 @@ public class TuioDemo : Form, TuioListener
 
     private void StartConnection()
     {
-        string server = "MohammedAdnan"; // Server address
+        string server = "LAPTOP-E2THQTEG"; // Server address
         int port = 8000; // Server port
 
         try
@@ -1140,16 +1158,28 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-    public void setpinch(String message)
+    public void setpinch(string message)
     {
+        DateTime currentDateTime = DateTime.Now; // Get the current time
+
         string[] parts = message.Split(new char[] { ',' }, 2);
         if (parts[0].Trim().Equals("pinching"))
         {
-            isPinch = true;
+            isPinch = true; // Set isPinch to true
+
+            string[] coordinates = parts[1].Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            if (coordinates.Length >= 2)
+            {
+                // Parse the x and y values
+                pinchx = int.TryParse(coordinates[0].Trim(), out int x) ? x : 0;
+                pinchy = int.TryParse(coordinates[1].Trim(), out int y) ? y : 0;
+            }
+
+            lastPinchTime = currentDateTime; // Update the last pinch time
         }
         else
         {
-            isPinch = false;
+            isPinch = false; // Set isPinch to false
         }
     }
 
@@ -1174,7 +1204,7 @@ public class TuioDemo : Form, TuioListener
                     {
                         Login(macmessage); // Handle student login
                     }
-                    if (isLogin && isPinch == false || isTeacherLogin && isPinch == false)
+                    if (isLogin == true && isPinch == false || isTeacherLogin && isPinch == false)
                     {
                         setpinch(macmessage);
                     }
@@ -1274,7 +1304,7 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-    private void Loadspecificstudent(string name , Graphics g)
+    private void Loadspecificstudent(string name, Graphics g)
     {
         Invalidate();
         float yOffset = 100; // Starting Y position for records
@@ -1285,17 +1315,21 @@ public class TuioDemo : Form, TuioListener
 
         foreach (var value in studentRecords)
         {
+            
             var p = value.Split(',');
             string names = p[0].Trim();
             string points = p[1].Trim();
             string error = p[2].Trim();
+            if (name == names)
+            {
+                g.DrawString(names, new Font("Arial", 14), Brushes.White, new PointF(200, yOffset));
+                g.DrawString(points, new Font("Arial", 14), Brushes.White, new PointF(600, yOffset));
+                g.DrawString(error, new Font("Arial", 14), Brushes.White, new PointF(900, yOffset));
 
+                yOffset += 25;
+            }
 
-            g.DrawString(names, new Font("Arial", 14), Brushes.White, new PointF(200, yOffset));
-            g.DrawString(points, new Font("Arial", 14), Brushes.White, new PointF(600, yOffset));
-            g.DrawString(error, new Font("Arial", 14), Brushes.White, new PointF(900, yOffset));
-
-            yOffset += 25;
+            
         }
     }
 }
