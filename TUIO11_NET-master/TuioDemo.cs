@@ -79,7 +79,6 @@ public class TuioDemo : Form, TuioListener
     private DateTime lastPinchTime = DateTime.MinValue;
     private string emotionmessage = "";
     private string country = "";
-    private string facename = "";
     string playername;
     bool showmyresuts = false;
 
