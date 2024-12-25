@@ -16,11 +16,26 @@ using System.Threading;
 using System.Timers;
 using System.Net.Mail;
 using static System.Windows.Forms.LinkLabel;
+using System.Text.RegularExpressions;
 
 
 public class TuioDemo : Form, TuioListener
 {
+    
+    int y_handindex = 0;
+    int x_handindex = 0;
     string macmessage;
+    //andrew added variables start
+    string Object_countryName = null;
+    int Object_x_coordinate = 0;
+    int Object_y_coordinate = 0;
+
+    int index_x_coordinate = 0;
+    int index_y_coordinate = 0;
+    int flag_move_index = 1;
+    ////andrew added variables end
+
+    int time_between_sending = 0;
     private TuioClient client;
     string Namespiceficstudent;
     private Dictionary<long, TuioObject> objectList;
@@ -44,7 +59,7 @@ public class TuioDemo : Form, TuioListener
     private int screen_width = Screen.PrimaryScreen.Bounds.Width;
     private int screen_height = Screen.PrimaryScreen.Bounds.Height;
     private Thread listenerThread;
-    public string serverIP = "LAPTOP-E2THQTEG";
+    public string serverIP = "DESKTOP-28SQ46K";
     private bool isRunning = false; // Flag to manage application state
     private int menuSize1 = 400;
     private int menuSize2 = 400;
@@ -66,7 +81,7 @@ public class TuioDemo : Form, TuioListener
     private string crossimagepath;
     TcpClient client1;
     NetworkStream stream;
-    bool isLogin = false;
+    bool isLogin = true;
     string[] parts;
     private bool isTeacherLogin = false;
     private List<string> studentRecords = new List<string>();
@@ -81,7 +96,7 @@ public class TuioDemo : Form, TuioListener
     private string country = "";
     string playername;
     bool showmyresuts = false;
-
+    string Message_To_Send_To_Client = null;
     private class StudentRecord
     {
         public string MacAddress { get; set; }
@@ -351,14 +366,14 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-    protected void drawmenu(PaintEventArgs prevent, Graphics g)
+    protected void drawmenu(PaintEventArgs prevent, Graphics g, string options_name, string optionone, string optiontwo)
     {
         Invalidate();
 
-        
-        g.DrawString("Student Menu", new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
+
+        g.DrawString(options_name, new Font("Arial", 25, FontStyle.Bold), Brushes.White, new PointF(480, 20));
         // Draw circle background
-        g.FillEllipse(bgrBrush, 400, 100, 400, 400);
+        g.FillEllipse(Brushes.Black, 400, 100, 400, 400);
 
         // Define angles for each section
         float startAngle = 270; // Starting angle for the first section
@@ -377,14 +392,15 @@ public class TuioDemo : Form, TuioListener
         g.FillPie(endBrush, 400, 100, menuSize4, menuSize4, startAngle, sweepAngle); // "Another" section
 
         // Draw labels for each section
-        g.DrawString("Start", new Font("Arial", 18), FntMenuClr, new PointF(690, 200));
-        g.DrawString("My results", new Font("Arial", 18), FntMenuClr, new PointF(557, 430));
+        g.DrawString(optionone, new Font("Arial", 18), FntMenuClr, new PointF(690, 200));
+        g.DrawString(optiontwo, new Font("Arial", 18), FntMenuClr, new PointF(557, 430));
         g.DrawString("Exit", new Font("Arial", 18), FntMenuClr, new PointF(445, 210));
 
         // Draw inner circle to create an empty effect
-        g.FillEllipse(bgrBrush, 500, 200, 200, 200); // Adjust size and position as needed
+        g.FillEllipse(Brushes.Black, 500, 200, 200, 200); // Adjust size and position as needed
     }
 
+    /// big change in the function below (andrew)
     protected override void OnPaintBackground(PaintEventArgs pevent)
     {
         // Getting the graphics object
@@ -411,12 +427,12 @@ public class TuioDemo : Form, TuioListener
             {
                 Console.WriteLine($"Background image not found: {backgroundImagePath}");
             }
-            if (cegypt == 1)
+            if (cegypt == 1 )
             {
                 Image country = Image.FromFile(Path.Combine(Environment.CurrentDirectory, "egypt.png"));
                 g.DrawImage(country, new Rectangle(new Point(660, 453), new Size(height / 3, height / 4)));
             }
-            if (cgermany == 1)
+            if (cgermany == 1 )
             {
                 Image country = Image.FromFile(Path.Combine(Environment.CurrentDirectory, "germany.png"));
                 g.DrawImage(country, new Rectangle(new Point(410, 60), new Size(height / 4, height / 4)));
@@ -455,8 +471,10 @@ public class TuioDemo : Form, TuioListener
                 }
             }
 
+            // andrew start
+
             // Draw the objects
-            if (objectList.Count > 0)
+            if (objectList.Count > 0 && flag_move_index == 0)
             {
                 lock (objectList)
                 {
@@ -593,7 +611,7 @@ public class TuioDemo : Form, TuioListener
             }
 
             // Draw the blobs
-            if (blobList.Count > 0)
+            if (blobList.Count > 0 && flag_move_index == 0)
             {
                 lock (blobList)
                 {
@@ -618,6 +636,251 @@ public class TuioDemo : Form, TuioListener
                     }
                 }
             }
+
+
+            if (Object_countryName != null && flag_move_index == 1)
+            {
+                int ox = index_x_coordinate;
+                int oy = index_y_coordinate;
+                int size = height / 4;
+                bool isCorrect = false; // To track if the object is correctly placed
+                bool isWrong = false;
+
+                g.TranslateTransform(ox, oy);
+                g.TranslateTransform(-ox, -oy);
+
+                // Check if object is in correct position based on its SymbolID
+                switch (Object_countryName)
+                {
+                    case "Germany":  // Germany case
+                        if (cgermany == 0)
+                        {
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "germany.png");
+                            isCorrect = (ox >= 450 && ox <= 550 && oy < 155);// Example coordinates
+                            if ((ox >= 250 && ox <= 360 && oy < 300 && oy > 200) || (ox >= 750 && ox <= 800 && oy > 500 && oy < 600))
+                            {
+                                mistakes += 5;
+                                isWrong = true;
+                            }
+                        }
+                        break;
+                    case "Spain":  // Spain case
+                        if (cspain == 0)
+                        {
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "spain.png");
+                            isCorrect = (ox >= 250 && ox <= 360 && oy > 200 && oy < 300); // Example coordinates
+                            if ((ox >= 450 && ox <= 550 && oy < 155) || (ox >= 750 && ox <= 800 && oy > 500 && oy < 600))
+                            {
+                                mistakes += 5;
+                                isWrong = true;
+                            }
+                        }
+                        break;
+                    case "egypt":  // Egypt case
+                        if (cegypt == 0)
+                        {
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "egypt.png");
+                            isCorrect = (ox >= 750 && ox <= 800 && oy > 500 && oy < 600);  // Example coordinates
+                            if ((ox >= 250 && ox <= 360 && oy < 300 && oy > 200) || (ox >= 450 && ox <= 550 && oy < 155))
+                            {
+                                mistakes += 5;
+                                isWrong = true;
+                            }
+                        }
+                        break;
+                    case "Menu":
+                        _ = ActivateStartMenuOption(4);
+                        break;
+
+                }
+
+                if (isCorrect && Object_countryName == "egypt")
+                {
+                    score += 5;
+                    correctct++;
+                    cegypt = 1;
+                }
+                if (isCorrect && Object_countryName == "Spain")
+                {
+                    score += 5;
+                    correctct++;
+                    cspain = 1;
+                }
+                if (isCorrect && Object_countryName == "Germany")
+                {
+                    score += 5;
+                    correctct++;
+                    cgermany = 1;
+                }
+
+                // Check if object is placed correctly and draw the appropriate mark or cross
+                try
+                {
+                    // Draw object image with rotation
+                    if (File.Exists(objectImagePath))
+                    {
+                        using (Image objectImage = Image.FromFile(objectImagePath))
+                        {
+                            // Save the current state of the graphics object
+                            GraphicsState state = g.Save();
+
+                            // Apply transformations for rotation
+                            g.TranslateTransform(ox, oy);
+                            g.TranslateTransform(-ox, -oy);
+
+                            // Draw the rotated object
+                            g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+
+                            // Restore the graphics state
+                            g.Restore(state);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Object image not found: {objectImagePath}");
+                        // Fall back to drawing a rectangle
+                        //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                    }
+
+                    // Draw the mark or cross based on correctness
+                    if (isCorrect)
+                    {
+                        g.DrawImage(mark, new Rectangle(ox - size / 4, oy - size / 4, size / 2, size / 2));
+                    }
+                    if (isWrong)
+                    {
+                        g.DrawImage(cross, new Rectangle(ox - size / 4, oy - size / 4, size / 2, size / 2));
+                        isWrong = false;
+                    }
+                }
+                catch
+                {
+                    // Handle exceptions (e.g., image not found or drawing error)
+                }
+            }
+
+            if (Object_countryName != null && flag_move_index == 0)
+            {
+                int ox = Object_x_coordinate;
+                int oy = Object_y_coordinate;
+                int size = height / 4;
+                bool isCorrect = false; // To track if the object is correctly placed
+                bool isWrong = false;
+
+                g.TranslateTransform(ox, oy);
+                g.TranslateTransform(-ox, -oy);
+
+                // Check if object is in correct position based on its SymbolID
+                switch (Object_countryName)
+                {
+                    case "Germany":  // Germany case
+                        if (cgermany == 0)
+                        {
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "germany.png");
+                            isCorrect = (ox >= 450 && ox <= 550 && oy < 155 );// Example coordinates
+                            if ((ox >= 250 && ox <= 360 && oy < 300 && oy > 200) || (ox >= 750 && ox <= 800 && oy > 500 && oy < 600))
+                            {
+                                mistakes += 5;
+                                isWrong = true;
+                            }
+                        }
+                        break;
+                    case "Spain":  // Spain case
+                        if (cspain == 0)
+                        {
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "spain.png");
+                            isCorrect = (ox >= 250 && ox <= 360 && oy > 200 && oy < 300); // Example coordinates
+                            if ((ox >= 450 && ox <= 550 && oy < 155) || (ox >= 750 && ox <= 800 && oy > 500 && oy < 600))
+                            {
+                                mistakes += 5;
+                                isWrong = true;
+                            }
+                        }
+                        break;
+                    case "egypt":  // Egypt case
+                        if (cegypt == 0)
+                        {
+                            objectImagePath = Path.Combine(Environment.CurrentDirectory, "egypt.png");
+                            isCorrect = (ox >= 750 && ox <= 800 && oy > 500 && oy < 600);  // Example coordinates
+                            if ((ox >= 250 && ox <= 360 && oy < 300 && oy > 200) || (ox >= 450 && ox <= 550 && oy < 155))
+                            {
+                                mistakes += 5;
+                                isWrong = true;
+                            }
+                        }
+                        break;
+                    case "Menu":
+                        _ = ActivateStartMenuOption(4);
+                        break;
+
+                }
+
+                if (isCorrect && Object_countryName == "egypt")
+                {
+                    score += 5;
+                    correctct++;
+                    cegypt = 1;
+                }
+                if (isCorrect && Object_countryName == "Spain")
+                {
+                    score += 5;
+                    correctct++;
+                    cspain = 1;
+                }
+                if (isCorrect && Object_countryName == "Germany")
+                {
+                    score += 5;
+                    correctct++;
+                    cgermany = 1;
+                }
+
+                // Check if object is placed correctly and draw the appropriate mark or cross
+                try
+                {
+                    // Draw object image with rotation
+                    if (File.Exists(objectImagePath))
+                    {
+                        using (Image objectImage = Image.FromFile(objectImagePath))
+                        {
+                            // Save the current state of the graphics object
+                            GraphicsState state = g.Save();
+
+                            // Apply transformations for rotation
+                            g.TranslateTransform(ox, oy);
+                            g.TranslateTransform(-ox, -oy);
+
+                            // Draw the rotated object
+                            g.DrawImage(objectImage, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+
+                            // Restore the graphics state
+                            g.Restore(state);
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Object image not found: {objectImagePath}");
+                        // Fall back to drawing a rectangle
+                        //g.FillRectangle(objBrush, new Rectangle(ox - size / 2, oy - size / 2, size, size));
+                    }
+
+                    // Draw the mark or cross based on correctness
+                    if (isCorrect)
+                    {
+                        g.DrawImage(mark, new Rectangle(ox - size / 4, oy - size / 4, size / 2, size / 2));
+                    }
+                    if (isWrong)
+                    {
+                        g.DrawImage(cross, new Rectangle(ox - size / 4, oy - size / 4, size / 2, size / 2));
+                        isWrong = false;
+                    }
+                }
+                catch
+                {
+                    // Handle exceptions (e.g., image not found or drawing error)
+                }
+            }
+
+        // andrew end 
         }
         else if (isTeacherLogin == true && isShow == true)
         {
@@ -707,7 +970,7 @@ public class TuioDemo : Form, TuioListener
         }
         else if (isLogin == true && isRunning == false && showmyresuts == false)
         {
-            drawmenu(pevent, g);
+            drawmenu(pevent, g, "student Options", "Start", "MyResults");
             if (objectList.Count > 0)
             {
                 lock (objectList)
@@ -822,13 +1085,59 @@ public class TuioDemo : Form, TuioListener
         }
         if (isLogin == false && isTeacherLogin == false)
         {
-            string text = "Login";
-            Font font = new Font("Arial", 24, FontStyle.Bold);
-            SizeF textSize = g.MeasureString(text, font);
-            float x = (this.ClientSize.Width - textSize.Width) / 2; // Center the text horizontally
-            float y = (this.ClientSize.Height - textSize.Height) / 2; // Center the text vertically
+
             g.FillRectangle(Brushes.Black, new Rectangle(0, 0, width, height));
-            g.DrawString(text, font, Brushes.White, x, y); // Draw the text in white
+            drawmenu(pevent, g, "LoginOptions", "Face", "Bluetooth");
+
+            if (objectList.Count > 0)
+            {
+                lock (objectList)
+                {
+                    foreach (TuioObject tobj in objectList.Values)
+                    {
+
+                        int ox = tobj.getScreenX(width);
+                        int oy = tobj.getScreenY(height);
+                        int size = height / 4;
+
+                        g.TranslateTransform(ox, oy);
+                        g.RotateTransform((float)(tobj.Angle / Math.PI * 180.0f));
+                        g.TranslateTransform(-ox, -oy);
+
+                        switch (tobj.SymbolID)
+                        {
+                            case 1:
+                                if (tobj.AngleDegrees >= 10 && tobj.AngleDegrees <= 90)
+                                {
+                                    showmyresuts = false;
+                                    startBrush = Brushes.DarkGreen;
+                                    Message_To_Send_To_Client = "face_recogention";
+                                }
+                                else if (tobj.AngleDegrees >= 95 && tobj.AngleDegrees <= 265)
+                                {
+                                    isRunning = false;
+                                    showspecificplayerresults = Brushes.DarkViolet;
+                                    Message_To_Send_To_Client = "bluetooth";
+                                }
+                                else if (tobj.AngleDegrees >= 272 && tobj.AngleDegrees <= 360)
+                                {
+                                    endBrush = Brushes.DarkRed;
+                                    stream.Close();
+                                    client1.Close();
+                                    this.Close();
+                                }
+                                else
+                                {
+                                    startBrush = Brushes.Green;
+                                    endBrush = Brushes.Red;
+                                    showspecificplayerresults = Brushes.Indigo;
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
+
         }
         if (isPinch)
         {
@@ -848,7 +1157,7 @@ public class TuioDemo : Form, TuioListener
             if ((DateTime.Now - lastPinchTime).TotalMilliseconds <= 500)
             {
                 // Draw the circle at the pinch coordinates
-                g.FillEllipse(Brushes.Red, pinchx, pinchy , 400, 400);
+                g.FillEllipse(Brushes.Red, pinchx, pinchy, 400, 400);
             }
             else
             {
@@ -911,7 +1220,7 @@ public class TuioDemo : Form, TuioListener
                 }
             }
         }
-        if (isLogin && emotionmessage!="")
+        if (isLogin && emotionmessage != "")
         {
             Font font = new Font("Arial", 16, FontStyle.Bold);
 
@@ -955,6 +1264,42 @@ public class TuioDemo : Form, TuioListener
 
             // Draw the country message on the screen
             g.DrawString(country, font, brush, point);
+        }
+        if (x_handindex != 0 && y_handindex != 0)
+        {
+            int radius = 20; // Example radius
+            g.DrawEllipse(Pens.Pink, x_handindex - radius, y_handindex - radius, radius * 2, radius * 2);
+
+            if ((x_handindex >= 630 && x_handindex <= 780) && (y_handindex >= 130 && y_handindex <= 260))
+            {
+                startBrush = new SolidBrush(Color.DarkGreen);
+                Message_To_Send_To_Client = "face_recogention";
+            }
+            else
+            {
+                startBrush = new SolidBrush(Color.Green);
+                Message_To_Send_To_Client = null;
+            }
+
+            if ((x_handindex >= 410 && x_handindex <= 770) && (y_handindex >= 330 && y_handindex <= 490))
+            {
+                showspecificplayerresults = new SolidBrush(Color.DarkViolet);
+            }
+            else
+            {
+                showspecificplayerresults = new SolidBrush(Color.Indigo);
+            }
+
+
+            if ((x_handindex >= 410 && x_handindex <= 570) && (y_handindex >= 110 && y_handindex <= 270))
+            {
+                endBrush = new SolidBrush(Color.IndianRed);
+            }
+            else
+            {
+                endBrush = new SolidBrush(Color.Red);
+            }
+
         }
     }
 
@@ -1137,35 +1482,6 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
-    private void StartConnection()
-    {
-        string server = "LAPTOP-E2THQTEG"; // Server address
-        int port = 8000; // Server port
-
-        try
-        {
-            client1 = new TcpClient(server, port);
-
-            string message = "Hello, Server!";
-            byte[] data = Encoding.UTF8.GetBytes(message);
-
-            // Get the network stream
-            stream = client1.GetStream();
-
-            // Send the message to the server
-            stream.Write(data, 0, data.Length);
-            Debug.WriteLine($"Sent: {message}");
-
-            listenerThread = new Thread(ListenForMessages);
-            listenerThread.IsBackground = true;
-            listenerThread.Start();
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Failed to connect: {ex.Message}");
-        }
-    }
-
     public void LoginForTeacher(String MacAdress)
     {
         if (isTeacherLogin == false)
@@ -1282,8 +1598,38 @@ public class TuioDemo : Form, TuioListener
         }
     }
 
+    private void StartConnection()
+    {
+        string server = "DESKTOP-1RLK4BP"; // Server address
+        int port = 8000; // Server port
+
+        try
+        {
+            client1 = new TcpClient(server, port);
+
+            string message = "Hello, Server!";
+            byte[] data = Encoding.UTF8.GetBytes(message);
+
+            // Get the network stream
+            stream = client1.GetStream();
+
+            // Send the message to the server
+            stream.Write(data, 0, data.Length);
+            Debug.WriteLine($"Sent: {message}");
+
+            listenerThread = new Thread(ListenForMessages);
+            listenerThread.IsBackground = true;
+            listenerThread.Start();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to connect: {ex.Message}");
+        }
+    }
 
     // Modify ListenForMessages to handle teacher login
+
+    // andrew modified this function
     private void ListenForMessages()
     {
         byte[] buffer = new byte[1024];
@@ -1296,10 +1642,10 @@ public class TuioDemo : Form, TuioListener
                 if (bytesRead > 0)
                 {
                     macmessage = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    if (isLogin == false)
-                    {
-                        getface(macmessage);
-                    }
+
+                    /*
+                     * 
+
                     if (isTeacherLogin == false)
                     {
                         LoginForTeacher(macmessage); // Handle teacher login
@@ -1320,9 +1666,70 @@ public class TuioDemo : Form, TuioListener
                     {
                         showcountry(macmessage);
                     }
-                   
+                   */
 
                     Debug.WriteLine($"Received from server: {macmessage}");
+
+                    // Extract x and y coordinates from parentheses
+                    var match = Regex.Match(macmessage, @"\((\d+),\s*(\d+)\)");
+                    if (match.Success)
+                    {
+                        x_handindex = int.Parse(match.Groups[1].Value);
+                        y_handindex = int.Parse(match.Groups[2].Value);
+
+                        Console.WriteLine($"x_handindex: {x_handindex}, y_handindex: {y_handindex}");
+                    }
+                    else
+                    {
+                        Console.WriteLine("Hand index coordinates not found.");
+                    }
+
+                    // Additional parsing logic for country name and bbox coordinates (andrew)
+                    try
+                    {
+                        // Extract 'class_name' for country
+                        var countryMatch = Regex.Match(macmessage, @"'class_name':\s*'(\w+)'");
+                        if (countryMatch.Success)
+                        {
+                            Object_countryName = countryMatch.Groups[1].Value;
+                            Console.WriteLine($"Country Name: {Object_countryName}");
+                        }
+
+                        // Extract bounding box coordinates
+                        var bboxMatch = Regex.Match(macmessage, @"'bbox':\s*\[\s*(\d+),\s*(\d+),");
+                        if (bboxMatch.Success)
+                        {
+                            Object_x_coordinate = int.Parse(bboxMatch.Groups[1].Value);
+                            Object_y_coordinate = int.Parse(bboxMatch.Groups[2].Value);
+                            Console.WriteLine($"Bounding Box - x: {Object_x_coordinate}, y: {Object_y_coordinate}");
+                        }
+
+                        // Extract index hand coordinates (e.g., "('Right hand', (557, 376))")
+                        var indexMatch = Regex.Match(macmessage, @"\('.*',\s*\((\d+),\s*(\d+)\)\)");
+                        if (indexMatch.Success)
+                        {
+                            index_x_coordinate = int.Parse(indexMatch.Groups[1].Value);
+                            index_y_coordinate = int.Parse(indexMatch.Groups[2].Value);
+                            Console.WriteLine($"Index Hand - x: {index_x_coordinate}, y: {index_y_coordinate}");
+                        }
+                    }
+                    catch (Exception parseEx)
+                    {
+                        Debug.WriteLine($"Error parsing message: {parseEx.Message}");
+                    }
+
+                    if (isLogin == false && Message_To_Send_To_Client == "face_recogention")
+                    {
+                        getface(macmessage);
+                        Message_To_Send_To_Client = null;
+                    }
+                }
+
+                if (Message_To_Send_To_Client != null)
+                {
+                    byte[] data = Encoding.UTF8.GetBytes(Message_To_Send_To_Client);
+                    stream.Write(data, 0, data.Length);
+                    Debug.WriteLine($"sent to server: {Message_To_Send_To_Client}");
                 }
             }
         }
@@ -1331,6 +1738,7 @@ public class TuioDemo : Form, TuioListener
             Debug.WriteLine($"Connection lost: {ex.Message}");
         }
     }
+
     private void WriteScoreToFile(string macAddress, int score, int mistakes, int cegypt, int cgermany, int cspain)
     {
         string filePath = "student.txt"; // Define the path for the text file
@@ -1428,7 +1836,7 @@ public class TuioDemo : Form, TuioListener
 
         foreach (var value in studentRecords)
         {
-            
+
             var p = value.Split(',');
             string names = p[0].Trim();
             string points = p[1].Trim();
@@ -1442,7 +1850,7 @@ public class TuioDemo : Form, TuioListener
                 yOffset += 25;
             }
 
-            
+
         }
     }
 }
